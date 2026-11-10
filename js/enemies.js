@@ -1,6 +1,7 @@
 // Battle art for every monster, painted from lit blobs, plus small field sprites for the ones
 // that walk around in dungeons.
 import { Painter, ramp, canvas } from './gfx.js';
+import { hasSheet, sheetArt, sheetMini } from './sheet.js';
 
 const K = '#100818', WHITE = '#ffffff';
 const eye = (p, x, y, col = K, glint = true, h = 2) => { for (let i = 0; i < h; i++) p.px(x, y + i, col); if (glint) p.px(x, y, WHITE); };
@@ -225,12 +226,12 @@ const MINI = {
 
 const cache = new Map();
 export function enemyArt(key) {
-  if (!cache.has(key)) cache.set(key, ART[key]());
+  if (!cache.has(key)) cache.set(key, hasSheet(key) ? sheetArt(key) : ART[key]());
   return cache.get(key);
 }
 export function miniArt(key) {
   const k = 'mini:' + key;
-  if (!cache.has(k)) cache.set(k, MINI[key] ? MINI[key]() : enemyArt(key));
+  if (!cache.has(k)) cache.set(k, hasSheet(key) ? sheetMini(key) : MINI[key] ? MINI[key]() : enemyArt(key));
   return cache.get(k);
 }
 export const ART_KEYS = Object.keys(ART);

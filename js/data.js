@@ -77,14 +77,14 @@ export const SPECIALS = {
 // art: key into ENEMY_ART; acts: weighted actions
 export const ENEMIES = {
   jelly:     { name: '綠凝膠', art: 'jelly', hp: 24, atk: 11, def: 3, int: 3, agi: 5, exp: 7, gold: 4, drop: ['herb', 0.15] },
-  peckbird:  { name: '尖嘴鳥', art: 'bird', hp: 20, atk: 13, def: 2, int: 2, agi: 16, exp: 8, gold: 5 },
-  hornhare:  { name: '角兔', art: 'hare', hp: 34, atk: 14, def: 6, int: 2, agi: 11, exp: 10, gold: 6, drop: ['herb', 0.1] },
+  peckbird:  { name: '尖嘴鳥', art: 'peckbird', hp: 20, atk: 13, def: 2, int: 2, agi: 16, exp: 8, gold: 5 },
+  hornhare:  { name: '大耳兔', art: 'hornhare', hp: 34, atk: 14, def: 6, int: 2, agi: 11, exp: 10, gold: 6, drop: ['herb', 0.1] },
   shroom:    { name: '毒菇人', art: 'shroom', hp: 60, atk: 19, def: 10, int: 8, agi: 7, exp: 16, gold: 12, acts: [['atk', 3], ['spore', 1]], drop: ['antidote', 0.2] },
   redjelly:  { name: '赤凝膠', art: 'redjelly', hp: 66, atk: 20, def: 8, int: 16, agi: 6, exp: 18, gold: 14, acts: [['atk', 2], ['ember', 1]] },
   bat:       { name: '洞窟蝙蝠', art: 'bat', hp: 50, atk: 24, def: 8, int: 6, agi: 20, exp: 16, gold: 10, acts: [['atk', 3], ['drain', 1]] },
-  rockcrab:  { name: '岩殼蟹', art: 'crab', hp: 95, atk: 28, def: 26, int: 4, agi: 4, exp: 26, gold: 18, drop: ['herb', 0.2] },
+  rockcrab:  { name: '岩殼蠍', art: 'rockcrab', hp: 95, atk: 28, def: 26, int: 4, agi: 4, exp: 26, gold: 18, drop: ['herb', 0.2] },
   bones:     { name: '骷髏兵', art: 'bones', hp: 85, atk: 30, def: 14, int: 5, agi: 9, exp: 28, gold: 20, undead: true, weak: 'holy', drop: ['water', 0.12] },
-  clawmaw:   { name: '巨鉗蟹王', art: 'clawmaw', boss: true, hp: 1250, atk: 34, def: 18, int: 15, agi: 8, exp: 300, gold: 400, acts: [['atk', 3], ['twin', 2], ['bubble', 2], ['harden', 1]] },
+  clawmaw:   { name: '巨鉗蠍王', art: 'clawmaw', boss: true, hp: 1250, atk: 34, def: 18, int: 15, agi: 8, exp: 300, gold: 400, acts: [['atk', 3], ['twin', 2], ['bubble', 2], ['harden', 1]] },
   merrow:    { name: '魚人兵', art: 'merrow', hp: 180, atk: 46, def: 30, int: 12, agi: 15, exp: 60, gold: 40, acts: [['atk', 4], ['twin', 1]], drop: ['hiherb', 0.1] },
   wisp:      { name: '幽火', art: 'wisp', hp: 130, atk: 30, def: 22, int: 30, agi: 18, exp: 55, gold: 35, undead: true, weak: 'ice', resist: 'fire', acts: [['atk', 1], ['ember', 2]] },
   gargoyle:  { name: '石像鬼', art: 'gargoyle', hp: 380, atk: 55, def: 50, int: 14, agi: 10, exp: 85, gold: 55, weak: 'bolt', drop: ['water', 0.15] },
@@ -145,8 +145,8 @@ localize(SPECIALS, {
   quake: ['Earthsplitter', 'Splits the ground under all enemies'], sanctuary: ['Holy Prayer', 'Heals everyone and cures ailments'],
 });
 localize(ENEMIES, {
-  jelly: ['Green Jelly'], peckbird: ['Peckbird'], hornhare: ['Horn Hare'], shroom: ['Toadstool'], redjelly: ['Red Jelly'],
-  bat: ['Cave Bat'], rockcrab: ['Rock Crab'], bones: ['Skeleton'], clawmaw: ['Crab King'], merrow: ['Merrow'], wisp: ['Wisp'],
+  jelly: ['Green Jelly'], peckbird: ['Peckbird'], hornhare: ['Lop Hare'], shroom: ['Toadstool'], redjelly: ['Red Jelly'],
+  bat: ['Cave Bat'], rockcrab: ['Rock Scorpion'], bones: ['Skeleton'], clawmaw: ['Scorpion King'], merrow: ['Merrow'], wisp: ['Wisp'],
   gargoyle: ['Gargoyle'], serpent: ['Sea Serpent'], seren: ['Seren of the Mist'], ordath: ['Ordath, Abyss King'],
 });
 localize(TECHS, {

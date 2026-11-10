@@ -150,9 +150,9 @@ export const SCRIPTS = {
   // ---------- the grotto ----------
   async garoCell(E, e) {
     await E.talk('鐵匠', L('喔喔！總算有人來了！', 'Oho! Somebody, at last!'),
-      L('我是葛羅，潮鳴港的鐵匠。三天前來這裡挖礦，結果那群螃蟹把洞口的機關弄亂了，我就被關在這裡出不去。', "I'm Garo, the smith from Tidebell. Came to mine three days ago, and those crabs jammed the gate works. I've been stuck in here ever since."));
+      L('我是葛羅，潮鳴港的鐵匠。三天前來這裡挖礦，結果那群蠍子把洞口的機關弄亂了，我就被關在這裡出不去。', "I'm Garo, the smith from Tidebell. Came to mine three days ago, and those scorpions jammed the gate works. I've been stuck in here ever since."));
     await E.say('蓮', L('村長很擔心你。我們要去洞窟深處拿潮之鑰。', "The mayor's worried about you. We're heading deeper in for the Tide Key."));
-    await E.say('葛羅', L('潮之鑰？深處那隻大螃蟹王就守在那裡！就是牠把我趕進這個死胡同的。', "The Tide Key? The big Crab King guards it down there! That's the brute that chased me into this dead end."));
+    await E.say('葛羅', L('潮之鑰？深處那隻大蠍子王就守在那裡！就是牠把我趕進這個死胡同的。', "The Tide Key? The big Scorpion King guards it down there! That's the brute that chased me into this dead end."));
     await E.say('葛羅', L('好！算我一份。我這把斧頭，可是劈過比牠的殼還硬的石頭！', 'Right! Count me in. This axe has split rock harder than that shell!'));
     E.join('garo', e);
     E.openGates('garo');
@@ -163,7 +163,7 @@ export const SCRIPTS = {
     E.music(null);
     await E.wait(20);
     await E.say('？？？', L('嘎……嘎嘎……人類……潮之鑰……主人說……不准給任何人……', 'Krrr... krr-krr... Humans... Tide Key... Master said... give it... to no one...'));
-    await E.say('米菈', L('這隻螃蟹會說話！？', 'That crab can TALK!?'));
+    await E.say('米菈', L('這隻蠍子會說話！？', 'That scorpion can TALK!?'));
     if (S.members.find((m) => m.id === 'garo')) await E.say('葛羅', L('就是牠！上次的仇，今天一起算！', "That's him! Time to settle the score!"));
     const r = await E.battle(TROOPS.boss1, { boss: true, bg: 'cave' });
     if (r !== 'win') return;
@@ -184,7 +184,7 @@ export const SCRIPTS = {
     E.give('tidekey', 1);
     E.sfx('chest');
     S.flags.key = true;
-    await E.say(null, L('螃蟹王守護的石台上，靜靜地放著一把藍色的鑰匙。\n得到了潮之鑰！', 'On the altar the Crab King guarded lies a blue key.\nGot the Tide Key!'));
+    await E.say(null, L('蠍子王守護的石台上，靜靜地放著一把藍色的鑰匙。\n得到了潮之鑰！', 'On the altar the Scorpion King guarded lies a blue key.\nGot the Tide Key!'));
     E.music('cave');
   },
 

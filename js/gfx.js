@@ -17,11 +17,16 @@ export const screen = document.getElementById('screen');
 const game = canvas(W, H);
 export const ctx = game.x;
 const sctx = screen.getContext('2d');
+// Everything is drawn in game pixels, but the picture underneath has Z real pixels per game pixel,
+// so a sprite drawn smaller than one game pixel per dot still lands on whole screen pixels.
+let Z = 1;
+export const fine = (s) => Math.max(1, Math.round(s * Z)) / Z;
 let lines = null;
 export function present(scan) {
   const k = Math.max(1, Math.round(screen.width / W));
   sctx.imageSmoothingEnabled = false;
   sctx.drawImage(game, 0, 0, W * k, H * k);
+  if (Z !== k) { Z = k; game.width = W * k; game.height = H * k; ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = false; }
   if (!scan || k < 2) return;
   if (!lines || lines.k !== k) {
     lines = canvas(W * k, H * k); lines.k = k;

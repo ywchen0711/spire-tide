@@ -10,7 +10,7 @@ A hundred years ago, the Abyss King Ordath raised a grey tower out of the easter
 
 One morning the tower rises again, and ships near it vanish into the mist. Ren is a young swordsman from the harbour town of Tidebell. The mayor sends him to fetch the Tide Key from the Northern Cape Grotto. Along the way three others join him: Mira, an apprentice mage; Garo, the town smith; and Lys, the last priestess of the sea temple.
 
-The world, characters, story, art and music are all original.
+The world, characters, story and music are original. The monster sprites are by Antifarea, Redshrike and Balmer under CC-BY 3.0; see [CREDITS.md](CREDITS.md).
 
 ## Languages
 
@@ -50,7 +50,8 @@ The game is fully playable in Traditional Chinese and in English, including the 
 ## How it looks and sounds
 
 - Characters are hand-drawn 16×24 pixel sprites with four directions and walking frames.
-- Monsters, trees and props are painted from shaded shapes on limited colour ramps, then dithered and outlined.
+- Monsters use 16-bit sprites by other pixel artists (see CREDITS.md), packed into `assets/monsters.png`. The picture is drawn with the real pixels of your screen, so monster sprites can be smaller and finer than one game pixel per dot.
+- Trees and props are painted from shaded shapes on limited colour ramps, then dithered and outlined.
 - Terrain tiles join up with their neighbours, and water is animated.
 - The title screen flies over the island with a Mode 7-style rotating ground plane. Battles open with a mosaic transition.
 - The music is played by a small synthesizer built in code: pulse, triangle, strings, noise drums and an echo. There are twelve original pieces.
@@ -71,7 +72,7 @@ The game is fully playable in Traditional Chinese and in English, including the 
 - `js/i18n.js` switches the language. Text is written as `L('中文', 'English')`, and the data tables get English names.
 - `js/gfx.js` has the pixel helpers, sprite painter, font and windows.
 - `js/sprites.js` holds the character sprites.
-- `js/enemies.js` holds the monster art.
+- `js/sheet.js` cuts the monster sprites out of `assets/monsters.png`; `js/enemies.js` has the older painted monsters as a fallback.
 - `js/tiles.js` draws the terrain tiles and pre-renders each map.
 - `js/audio.js` is the synthesizer, sequencer, soundtrack and sound effects.
 

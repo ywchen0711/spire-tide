@@ -394,16 +394,16 @@ const CREDITS_ZH = [
   ['蒼潮魔塔傳', 'big'], [''], ['SPIRE OF THE BLUE TIDE'], [''], [''],
   ['— 登場人物 —', 'y'], ['蓮　　潮鳴港的少年劍士'], ['米菈　見習魔導士'], ['葛羅　鐵匠'], ['莉絲　海神殿的巫女'], [''],
   ['村長　母親　老漁夫　水手'], ['守衛　旅店老闆　修女'], ['潮鳴港的人們'], [''], [''],
-  ['— 魔物 —', 'y'], ['綠凝膠　尖嘴鳥　角兔　毒菇人'], ['洞窟蝙蝠　岩殼蟹　骷髏兵'], ['魚人兵　幽火　石像鬼　海蛇'], ['巨鉗蟹王'], ['霧之使者 塞壬'], ['深淵王 歐爾德'], [''], [''],
-  ['故事、畫面、音樂、程式'], ['全部以程式碼繪製與合成'], [''], ['字型：俐方體11號 (Cubic 11)'], [''], [''],
+  ['— 魔物 —', 'y'], ['綠凝膠　尖嘴鳥　大耳兔　毒菇人'], ['洞窟蝙蝠　岩殼蠍　骷髏兵'], ['魚人兵　幽火　石像鬼　海蛇'], ['巨鉗蠍王'], ['霧之使者 塞壬'], ['深淵王 歐爾德'], [''], [''],
+  ['故事、音樂、地圖與人物'], ['以程式碼繪製與合成'], [''], ['怪物圖像 (CC-BY 3.0)'], ['Charles Gabriel (Antifarea)'], ['Stephen "Redshrike" Challener'], ['Balmer'], ['OpenGameArt.org'], [''], ['字型：俐方體11號 (Cubic 11)'], [''], [''],
   ['感謝你的遊玩！', 'y'], [''], [''], ['—— 完 ——', 'big'],
 ];
 const CREDITS_EN = [
   ['SPIRE OF THE', 'big'], [''], ['BLUE TIDE', 'big'], [''], ['蒼潮魔塔傳'], [''], [''],
   ['- CAST -', 'y'], ['Ren - young swordsman of Tidebell'], ['Mira - apprentice mage'], ['Garo - the town smith'], ['Lys - priestess of the sea temple'], [''],
   ['The Mayor   Mother   Old Fisher'], ['Sailor   Guard   Innkeeper   Sister'], ['and the people of Tidebell'], [''], [''],
-  ['- MONSTERS -', 'y'], ['Green Jelly   Peckbird   Horn Hare'], ['Toadstool   Cave Bat   Rock Crab'], ['Skeleton   Merrow   Wisp'], ['Gargoyle   Sea Serpent'], ['The Crab King'], ['Seren of the Mist'], ['Ordath, King of the Abyss'], [''], [''],
-  ['Story, art and music'], ['all made in code'], [''], ['Font: Cubic 11'], [''], [''],
+  ['- MONSTERS -', 'y'], ['Green Jelly   Peckbird   Lop Hare'], ['Toadstool   Cave Bat   Rock Scorpion'], ['Skeleton   Merrow   Wisp'], ['Gargoyle   Sea Serpent'], ['The Scorpion King'], ['Seren of the Mist'], ['Ordath, King of the Abyss'], [''], [''],
+  ['Story, music, maps and heroes'], ['made in code'], [''], ['Monster sprites (CC-BY 3.0)'], ['Charles Gabriel (Antifarea)'], ['Stephen "Redshrike" Challener'], ['Balmer'], ['hosted by OpenGameArt.org'], [''], ['Font: Cubic 11'], [''], [''],
   ['THANK YOU FOR PLAYING!', 'y'], [''], [''], ['THE END', 'big'],
 ];
 const creditList = () => (isEn() ? CREDITS_EN : CREDITS_ZH);

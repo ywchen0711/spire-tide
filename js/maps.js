@@ -290,7 +290,7 @@ MAPS.cave1 = {
       'KKKKKKKKKKKKKKKK.KKKKKKKKKKKKKKK',
       'KKKKKKKKKKKKKKKKXKKKKKKKKKKKKKKK',
       'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
-    ], caveLegend([{ id: 'c1a', item: 'ironsword' }, { id: 'c1b', item: 'powerring' }], [['cbat', 'bat'], ['cshroom', 'shroom'], ['ccrab', 'crab']], {
+    ], caveLegend([{ id: 'c1a', item: 'ironsword' }, { id: 'c1b', item: 'powerring' }], [['cbat', 'bat'], ['cshroom', 'shroom'], ['ccrab', 'rockcrab']], {
       G: { k: 'cfloor', e: npc('garo', 'garo', 'garoCell', { dir: 'd', cond: (f) => !f.garo }) },
       j: { k: 'cfloor', e: { type: 'gate', group: 9, flag: 'garo' } },
       v: { k: 'down', e: warp('cave2', 3, 15, 'r') },
@@ -321,7 +321,7 @@ MAPS.cave2 = {
     'KK.....m...@...e.KKKKKKK',
     'KKKK~~~~.....*...KKKKKKK',
     'KKKKKKKKKKKKKKKKKKKKKKKK',
-  ], caveLegend([{ id: 'c2a', item: 'wardcharm' }], [['ccrab2', 'crab'], ['cbones', 'bones']], {
+  ], caveLegend([{ id: 'c2a', item: 'wardcharm' }], [['ccrab2', 'rockcrab'], ['cbones', 'bones']], {
     '^': { k: 'stairs', e: warp('cave1', 17, 3, 'd') },
     B: { k: 'cfloor', e: { type: 'boss', id: 'clawmaw', art: 'clawmaw', scale: 0.4, talk: 'clawmaw', cond: (f) => !f.boss1 } },
     T: { k: 'cfloor', e: { type: 'trigger', run: 'clawmaw', once: 'boss1seen' } },

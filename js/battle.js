@@ -2,6 +2,7 @@
 // stands in front with their status windows, everyone picks a command and the round plays out.
 import { ctx, W, H, canvas, text, textW, windowBox, HAND, HAND_D, tint, bar, ramp, hash, bayer, snes, hex, rgb } from './gfx.js';
 import { sprite } from './sprites.js';
+import { fine } from './gfx.js';
 import { enemyArt } from './enemies.js';
 import { ENEMIES, TECHS, SPELLS, SPECIALS, ITEMS, HEROES } from './data.js';
 import { L, isEn } from './i18n.js';
@@ -86,9 +87,9 @@ function foeFighter(f) { const d = ENEMIES[f.id]; return { atk: d.atk, dfn: d.de
 function heroFighter(h) { const s = stats(h); return { atk: s.atk, dfn: s.dfn, int: s.int, agi: s.agi, buffs: h.buffs, defending: h.defending }; }
 function layoutFoes() {
   const list = B.foes, gap = 8;
-  const total = list.reduce((s, f) => s + f.art.width, 0) + gap * (list.length - 1);
+  const total = list.reduce((s, f) => s + f.aw, 0) + gap * (list.length - 1);
   let x = Math.round((W - total) / 2);
-  for (const f of list) { f.x = x + f.art.width / 2; f.base = ENEMIES[f.id].boss ? 132 : 122; x += f.art.width + gap; }
+  for (const f of list) { f.x = x + f.aw / 2; f.base = ENEMIES[f.id].boss ? 132 : 122; x += f.aw + gap; }
 }
 
 // ---------- start / end ----------
@@ -96,7 +97,7 @@ export function startBattle(troop, { bg = 'field', boss = false, music, canFlee 
   return new Promise((resolve) => {
     const foes = troop.map((id, i) => {
       const d = ENEMIES[id];
-      return { id, n: i, name: d.name + (troop.filter((t) => t === id).length > 1 ? 'ABCD'[troop.slice(0, i).filter((t) => t === id).length] : ''), hp: d.hp, maxhp: d.hp, art: enemyArt(d.art), status: {}, buffs: {}, flash: 0, shake: 0, die: 0, bob: Math.random() * 6 };
+      return { get aw() { return artW(this.art); }, get ah() { return artH(this.art); }, id, n: i, name: d.name + (troop.filter((t) => t === id).length > 1 ? 'ABCD'[troop.slice(0, i).filter((t) => t === id).length] : ''), hp: d.hp, maxhp: d.hp, art: enemyArt(d.art), status: {}, buffs: {}, flash: 0, shake: 0, die: 0, bob: Math.random() * 6 };
     });
     B = { troop, foes, bg, boss, canFlee: canFlee && !boss, waits: [], pops: [], parts: [], msg: '', round: 0, active: null, shake: 0, flash: 0, flashCol: '#fff', fade: 30, resolve, heroFx: {}, bolt: null, done: false, targeting: null };
     for (const h of S.members) { h.buffs = {}; h.defending = false; h.status = { ...h.status }; delete h.status.sleep; }
@@ -256,7 +257,7 @@ function pickFoe() {
         if (input.pressed('a')) { sfx('ok'); done(list[i]); }
         if (input.pressed('b')) { sfx('cancel'); done(null); }
       },
-      draw() { const f = list[i]; if (!f) return; ctx.drawImage(HAND_D, Math.round(f.x - 5), Math.round(f.base - f.art.height - 10 + ((B.t >> 3) % 2))); windowBox(4, 4, W - 8, 24); text(f.name, W / 2, 10, '#f8f8f8', { align: 'center' }); },
+      draw() { const f = list[i]; if (!f) return; ctx.drawImage(HAND_D, Math.round(f.x - 5), Math.round(f.base - f.ah - 10 + ((B.t >> 3) % 2))); windowBox(4, 4, W - 8, 24); text(f.name, W / 2, 10, '#f8f8f8', { align: 'center' }); },
     };
     const done = (v) => { UI_pop(w); res(v); };
     UI_push(w);
@@ -290,7 +291,7 @@ async function stepForward(h) { B.heroFx[h.id] = { dy: 0 }; for (let k = 0; k < 
 async function stepBack(h) { for (let k = 0; k < 6; k++) { B.heroFx[h.id].dy += 2; await frames(1); } delete B.heroFx[h.id]; }
 function hurtFoe(f, d, col = '#f8f8f8') {
   f.hp = Math.max(0, f.hp - d); f.flash = 8; f.shake = 10;
-  popup(f.x, f.base - f.art.height / 2, d, col);
+  popup(f.x, f.base - f.ah / 2, d, col);
   if (f.status.sleep && Math.random() < 0.5) delete f.status.sleep;
   if (f.hp <= 0) killFoe(f);
 }
@@ -316,10 +317,10 @@ async function heroAct(h, c) {
     if (!t) return;
     msg(L(`${h.name}的攻擊！`, `${h.name} attacks!`));
     await stepForward(h);
-    sfx('slash'); fxSlash(t.x, t.base - t.art.height / 2);
+    sfx('slash'); fxSlash(t.x, t.base - t.ah / 2);
     await frames(10);
     const r = physical(heroFighter(h), foeFighter(t));
-    if (r.miss) { sfx('miss'); popup(t.x, t.base - t.art.height / 2, 'MISS', '#a0a8c0'); }
+    if (r.miss) { sfx('miss'); popup(t.x, t.base - t.ah / 2, 'MISS', '#a0a8c0'); }
     else { sfx(r.crit ? 'crit' : 'hit'); if (r.crit) { B.flash = 4; msg(L('會心一擊！', 'Critical hit!')); } hurtFoe(t, r.dmg); h.gauge = Math.min(100, h.gauge + 6); }
     await frames(22);
     await stepBack(h);
@@ -345,7 +346,7 @@ async function heroAct(h, c) {
     await frames(16);
     const s = stats(h);
     if (HEROES[h.id].special === 'azure') {
-      const t = pickAliveFoe(c.target); if (t) { for (let k = 0; k < 3; k++) { fxSlash(t.x + (k - 1) * 8, t.base - t.art.height / 2 + (k - 1) * 6, '#80d8ff'); sfx('slash'); await frames(6); } sfx('crit'); B.shake = 10; const r = physical(heroFighter(h), foeFighter(t), 2.6); hurtFoe(t, r.miss ? Math.round(s.atk * 1.5) : r.dmg, '#80d8ff'); }
+      const t = pickAliveFoe(c.target); if (t) { for (let k = 0; k < 3; k++) { fxSlash(t.x + (k - 1) * 8, t.base - t.ah / 2 + (k - 1) * 6, '#80d8ff'); sfx('slash'); await frames(6); } sfx('crit'); B.shake = 10; const r = physical(heroFighter(h), foeFighter(t), 2.6); hurtFoe(t, r.miss ? Math.round(s.atk * 1.5) : r.dmg, '#80d8ff'); }
     } else if (HEROES[h.id].special === 'starburst') {
       for (let k = 0; k < 24; k++) B.parts.push({ x: Math.random() * W, y: -10 - Math.random() * 60, vx: 0.5, vy: 4 + Math.random() * 2, life: 50, col: ['#f8f8a0', '#ffffff', '#a0c8ff'][k % 3], size: 3, type: 'star' });
       sfx('holy'); await frames(30); sfx('bolt');
@@ -385,7 +386,7 @@ async function castSpell(h, sp, target, s) {
   if (sp.type === 'dmg') {
     const ts = target === 'allFoes' ? foesAlive() : [target && target.hp > 0 ? target : foesAlive()[0]].filter(Boolean);
     sfx(sp.fx === 'holy' ? 'holy' : sp.fx);
-    for (const t of ts) fxSpell(sp.fx, t.x, t.base - t.art.height / 2, t);
+    for (const t of ts) fxSpell(sp.fx, t.x, t.base - t.ah / 2, t);
     await frames(sp.fx === 'bolt' ? 24 : 30);
     for (const t of ts) { const r = magic(sp.power, sp.k, me, foeFighter(t), sp.el); hurtFoe(t, r.dmg, r.weak ? '#f8e040' : '#f8f8f8'); }
     await frames(24);
@@ -411,16 +412,16 @@ async function castSpell(h, sp, target, s) {
     await frames(20);
   } else if (sp.type === 'sleep') {
     sfx('sleep');
-    for (const f of foesAlive()) fxSpell('sleep', f.x, f.base - f.art.height / 2);
+    for (const f of foesAlive()) fxSpell('sleep', f.x, f.base - f.ah / 2);
     await frames(30);
-    for (const f of foesAlive()) { const ok = !ENEMIES[f.id].boss && Math.random() < 0.7; if (ok) { f.status.sleep = 2 + Math.floor(Math.random() * 2); popup(f.x, f.base - f.art.height / 2, 'ZZZ', '#c0c0ff'); } else popup(f.x, f.base - f.art.height / 2, 'MISS', '#a0a8c0'); }
+    for (const f of foesAlive()) { const ok = !ENEMIES[f.id].boss && Math.random() < 0.7; if (ok) { f.status.sleep = 2 + Math.floor(Math.random() * 2); popup(f.x, f.base - f.ah / 2, 'ZZZ', '#c0c0ff'); } else popup(f.x, f.base - f.ah / 2, 'MISS', '#a0a8c0'); }
     await frames(24);
   }
   void s;
 }
 async function foeAct(f) {
   const d = ENEMIES[f.id];
-  if (f.status.sleep) { popup(f.x, f.base - f.art.height, 'ZZZ', '#c0c0ff'); await frames(20); return; }
+  if (f.status.sleep) { popup(f.x, f.base - f.ah, 'ZZZ', '#c0c0ff'); await frames(20); return; }
   const targets = heroesAlive();
   if (!targets.length) return;
   const act = foeAction(f, B.round);
@@ -465,16 +466,16 @@ async function foeAct(f) {
   } else if (tech.kind === 'drain') {
     const t = pick(); sfx('drain');
     const p = heroPos(t);
-    for (let k = 0; k < 14; k++) B.parts.push({ x: p.x + (Math.random() - 0.5) * 12, y: p.y - 12, tx: f.x, ty: f.base - f.art.height / 2, life: 40, col: '#f84060', size: 2, type: 'home', d: k * 2 });
+    for (let k = 0; k < 14; k++) B.parts.push({ x: p.x + (Math.random() - 0.5) * 12, y: p.y - 12, tx: f.x, ty: f.base - f.ah / 2, life: 40, col: '#f84060', size: 2, type: 'home', d: k * 2 });
     await frames(30);
     const r = magic(10, 0.8, foeFighter(f), heroFighter(t), 'dark');
     hurtHero(t, r.dmg);
     f.hp = Math.min(f.maxhp, f.hp + r.dmg);
-    popup(f.x, f.base - f.art.height / 2, r.dmg, '#78f878');
+    popup(f.x, f.base - f.ah / 2, r.dmg, '#78f878');
     await frames(24);
   } else if (tech.kind === 'buff') {
     sfx('buff'); f.buffs[tech.stat] = 3;
-    for (let k = 0; k < 12; k++) B.parts.push({ x: f.x + (Math.random() - 0.5) * f.art.width * 0.6, y: f.base - Math.random() * f.art.height, vx: 0, vy: -1, life: 30, col: '#f8e070', size: 2 });
+    for (let k = 0; k < 12; k++) B.parts.push({ x: f.x + (Math.random() - 0.5) * f.aw * 0.6, y: f.base - Math.random() * f.ah, vx: 0, vy: -1, life: 30, col: '#f8e070', size: 2 });
     await frames(30);
     msg(L(`${f.name}的防禦力提升了！`, `${f.name}'s defence rose!`));
     await frames(20);
@@ -522,6 +523,8 @@ export function updateBattle() {
   if (B.fade > 0) B.fade--;
 }
 const dissolve = new Map();
+// a sheet sprite is drawn at its own scale, snapped to whole screen pixels
+const artW = (a) => a.width * (a.fs ? fine(a.fs) : 1), artH = (a) => a.height * (a.fs ? fine(a.fs) : 1);
 function dissolved(f) {
   // a monster breaking up into pixels as it dies
   const k = f.die, a = f.art;
@@ -544,11 +547,11 @@ export function drawBattle() {
   for (const f of B.foes) {
     if (f.hp <= 0 && f.die >= 38) continue;
     const bob = ENEMIES[f.id].boss ? Math.sin((B.t + f.bob * 10) / 24) * 2 : 0;
-    let x = Math.round(f.x - f.art.width / 2 + sx + (f.shake ? ((f.shake % 4) < 2 ? 2 : -2) : 0));
-    const y = Math.round(f.base - f.art.height + bob + (f.lunge ? Math.sin((10 - f.lunge) / 10 * Math.PI) * 6 : 0));
-    if (f.hp <= 0) { ctx.drawImage(dissolved(f), x, y); continue; }
-    if (f.status.sleep) { if ((B.t >> 5) % 2) text('Z', x + f.art.width - 4, y - 4 - ((B.t >> 3) % 4), '#c0c0ff'); }
-    ctx.drawImage(f.flash && f.flash % 4 < 2 ? tint(f.art, '#ffffff', 0.85) : f.art, x, y);
+    let x = Math.round(f.x - f.aw / 2 + sx + (f.shake ? ((f.shake % 4) < 2 ? 2 : -2) : 0));
+    const y = Math.round(f.base - f.ah + bob + (f.lunge ? Math.sin((10 - f.lunge) / 10 * Math.PI) * 6 : 0));
+    if (f.hp <= 0) { ctx.drawImage(dissolved(f), x, y, f.aw, f.ah); continue; }
+    if (f.status.sleep) { if ((B.t >> 5) % 2) text('Z', x + f.aw - 4, y - 4 - ((B.t >> 3) % 4), '#c0c0ff'); }
+    ctx.drawImage(f.flash && f.flash % 4 < 2 ? tint(f.art, '#ffffff', 0.85) : f.art, x, y, f.aw, f.ah);
   }
   // lightning
   if (B.bolt) {
