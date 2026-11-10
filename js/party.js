@@ -81,6 +81,7 @@ export function load(slot = 0) {
     if (!d) return false;
     Object.assign(S, { members: [], inv: {}, flags: {} }, d);
     refreshNames();
+    for (const m of S.members) S.flags[m.id] = true; // older saves never recorded who had joined
     return true;
   } catch (e) { return false; }
 }

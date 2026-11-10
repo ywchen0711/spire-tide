@@ -67,7 +67,7 @@ const E = {
   ent: (id) => findEnt(id),
   walk: (e, path, sp) => walkEnt(e, path, sp),
   walkPlayer,
-  join(id, ent) { addMember(id); if (ent) ent.gone = true; sfx('level'); },
+  join(id, ent) { addMember(id); S.flags[id] = true; if (ent) ent.gone = true; sfx('level'); },
   give(id, n = 1) { addItem(id, n); },
   heal: fullHeal,
   save: () => save(0),
