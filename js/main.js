@@ -399,7 +399,7 @@ const CREDITS_ZH = [
   ['感謝你的遊玩！', 'y'], [''], [''], ['—— 完 ——', 'big'],
 ];
 const CREDITS_EN = [
-  ['SPIRE OF THE', 'big'], ['BLUE TIDE', 'big'], [''], ['蒼潮魔塔傳'], [''], [''],
+  ['SPIRE OF THE', 'big'], [''], ['BLUE TIDE', 'big'], [''], ['蒼潮魔塔傳'], [''], [''],
   ['- CAST -', 'y'], ['Ren - young swordsman of Tidebell'], ['Mira - apprentice mage'], ['Garo - the town smith'], ['Lys - priestess of the sea temple'], [''],
   ['The Mayor   Mother   Old Fisher'], ['Sailor   Guard   Innkeeper   Sister'], ['and the people of Tidebell'], [''], [''],
   ['- MONSTERS -', 'y'], ['Green Jelly   Peckbird   Horn Hare'], ['Toadstool   Cave Bat   Rock Crab'], ['Skeleton   Merrow   Wisp'], ['Gargoyle   Sea Serpent'], ['The Crab King'], ['Seren of the Mist'], ['Ordath, King of the Abyss'], [''], [''],
