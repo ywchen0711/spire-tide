@@ -4,11 +4,12 @@ import { ctx, W, H, canvas, text, textW, windowBox, HAND, HAND_D, tint, bar, ram
 import { sprite } from './sprites.js';
 import { enemyArt } from './enemies.js';
 import { ENEMIES, TECHS, SPELLS, SPECIALS, ITEMS, HEROES } from './data.js';
+import { L, isEn } from './i18n.js';
 import { S, stats, spellsOf, gainExp, addItem, count } from './party.js';
 import { physical, magic, healAmount, foeAction } from './rules.js';
 import { input } from './input.js';
 import { sfx, playMusic } from './audio.js';
-import { UI, menu, uiTick } from './ui.js';
+import { UI, menu, uiTick, wrap } from './ui.js';
 
 let B = null;
 export const isBattle = () => !!B;
@@ -107,7 +108,7 @@ export function startBattle(troop, { bg = 'field', boss = false, music, canFlee 
 async function run() {
   await frames(20);
   const names = [...new Set(B.foes.map((f) => ENEMIES[f.id].name))];
-  await msgWait(B.boss ? `${names[0]}擋住了去路！` : `${names.join('、')}出現了！`);
+  await msgWait(B.boss ? L(`${names[0]}擋住了去路！`, `${names[0]} blocks the way!`) : L(`${names.join('、')}出現了！`, `${names.join(', ')} appeared!`));
   msg('');
   for (;;) {
     B.round++;
@@ -116,8 +117,8 @@ async function run() {
       const myAgi = heroesAlive().reduce((s, h) => s + stats(h).agi, 0) / Math.max(1, heroesAlive().length);
       const theirAgi = foesAlive().reduce((s, f) => s + ENEMIES[f.id].agi, 0) / foesAlive().length;
       const chance = Math.max(0.3, Math.min(0.9, 0.55 + (myAgi - theirAgi) * 0.03));
-      if (r.smoke || Math.random() < chance) { sfx('run'); await msgWait(r.smoke ? '丟出煙玉，趁亂逃走了！' : '成功逃走了！'); return end('flee'); }
-      await msgWait('沒能逃掉！');
+      if (r.smoke || Math.random() < chance) { sfx('run'); await msgWait(r.smoke ? L('丟出煙玉，趁亂逃走了！', 'Threw a smoke ball and slipped away!') : L('成功逃走了！', 'Got away safely!')); return end('flee'); }
+      await msgWait(L('沒能逃掉！', "Couldn't escape!"));
       if (await enemyPhase()) return;
       if (await roundEnd()) return;
       continue;
@@ -161,20 +162,20 @@ async function victory() {
   playMusic('victory', { restart: true });
   let exp = 0, gold = 0; const drops = [];
   for (const f of B.foes) { const d = ENEMIES[f.id]; exp += d.exp; gold += d.gold; if (d.drop && Math.random() < d.drop[1]) drops.push(d.drop[0]); }
-  await msgWait('戰鬥勝利！');
-  if (exp) await msgWait(`每人獲得 ${exp} 點經驗值。`);
-  if (gold) { S.gold += gold; await msgWait(`獲得 ${gold} 金幣。`); }
-  for (const it of drops) { addItem(it); await msgWait(`得到了${ITEMS[it].name}！`); }
+  await msgWait(L('戰鬥勝利！', 'Victory!'));
+  if (exp) await msgWait(L(`每人獲得 ${exp} 點經驗值。`, `Everyone gained ${exp} EXP.`));
+  if (gold) { S.gold += gold; await msgWait(L(`獲得 ${gold} 金幣。`, `Found ${gold} gold.`)); }
+  for (const it of drops) { addItem(it); await msgWait(L(`得到了${ITEMS[it].name}！`, `Found ${ITEMS[it].name}!`)); }
   for (const h of heroes()) {
     const lines = gainExp(h, exp);
-    for (const l of lines) { if (l.includes('升到')) sfx('level'); await msgWait(l); }
+    for (const l of lines) { if (l.includes('升到') || l.includes('reached level')) sfx('level'); await msgWait(l); }
   }
   for (const h of heroes()) { h.defending = false; h.buffs = {}; }
   end('win');
 }
 async function defeat() {
   await frames(30);
-  await msgWait('全員倒下了……');
+  await msgWait(L('全員倒下了……', 'The party has fallen...'));
   end('lose');
 }
 function end(result) {
@@ -205,9 +206,9 @@ async function commandMenu(h, canBack) {
   for (;;) {
     const sp = SPECIALS[HEROES[h.id].special], full = h.gauge >= 100;
     const items = [
-      { label: '攻擊' }, { label: '魔法', disabled: !spellsOf(h).length },
-      { label: full ? sp.name : '技能', disabled: !full, color: full ? '#f8e070' : undefined }, { label: '道具' },
-      { label: '防禦' }, { label: '逃跑', disabled: !B.canFlee },
+      { label: L('攻擊', 'Attack') }, { label: L('魔法', 'Magic'), disabled: !spellsOf(h).length },
+      { label: full && !isEn() ? sp.name : L('技能', 'Skill'), disabled: !full, color: full ? '#f8e070' : undefined }, { label: L('道具', 'Item') },
+      { label: L('防禦', 'Guard') }, { label: L('逃跑', 'Run'), disabled: !B.canFlee },
     ];
     const r = await menu(items, { x: Math.min(W - 130, Math.max(2, box.x + box.w / 2 - 65)), y: 98, w: 130, cols: 2, cancel: canBack, start: B.lastCmd && B.lastCmd[h.id] || 0 });
     if (r < 0) return 'back';
@@ -224,7 +225,7 @@ async function commandMenu(h, canBack) {
     if (r === 3) {
       const list = Object.keys(S.inv).filter((id) => ITEMS[id].use);
       if (!list.length) { sfx('buzz'); continue; }
-      const k = await menu(list.map((id) => ({ label: ITEMS[id].name, right: S.inv[id] })), { x: 60, y: 30, w: 140, title: '道具', maxRows: 6 });
+      const k = await menu(list.map((id) => ({ label: ITEMS[id].name, right: S.inv[id] })), { x: 60, y: 30, w: 140, title: L('道具', 'Items'), maxRows: 6 });
       if (k < 0) continue;
       const id = list[k], it = ITEMS[id];
       if (it.use === 'escape') { if (!B.canFlee) { sfx('buzz'); continue; } addItem(id, -1); return { type: 'flee', smoke: true }; }
@@ -313,22 +314,22 @@ async function heroAct(h, c) {
   if (c.type === 'attack') {
     const t = pickAliveFoe(c.target);
     if (!t) return;
-    msg(`${h.name}的攻擊！`);
+    msg(L(`${h.name}的攻擊！`, `${h.name} attacks!`));
     await stepForward(h);
     sfx('slash'); fxSlash(t.x, t.base - t.art.height / 2);
     await frames(10);
     const r = physical(heroFighter(h), foeFighter(t));
     if (r.miss) { sfx('miss'); popup(t.x, t.base - t.art.height / 2, 'MISS', '#a0a8c0'); }
-    else { sfx(r.crit ? 'crit' : 'hit'); if (r.crit) { B.flash = 4; msg('會心一擊！'); } hurtFoe(t, r.dmg); h.gauge = Math.min(100, h.gauge + 6); }
+    else { sfx(r.crit ? 'crit' : 'hit'); if (r.crit) { B.flash = 4; msg(L('會心一擊！', 'Critical hit!')); } hurtFoe(t, r.dmg); h.gauge = Math.min(100, h.gauge + 6); }
     await frames(22);
     await stepBack(h);
     return;
   }
   if (c.type === 'magic') {
     const sp = SPELLS[c.id];
-    if (h.mp < sp.mp) { await msgWait(`${h.name}的魔力不夠了。`); return; }
+    if (h.mp < sp.mp) { await msgWait(L(`${h.name}的魔力不夠了。`, `${h.name} is out of MP.`)); return; }
     h.mp -= sp.mp;
-    msg(`${h.name}施放了${sp.name}！`);
+    msg(L(`${h.name}施放了${sp.name}！`, `${h.name} casts ${sp.name}!`));
     await stepForward(h);
     await castSpell(h, sp, c.target, stats(h));
     await stepBack(h);
@@ -338,7 +339,7 @@ async function heroAct(h, c) {
     if (h.gauge < 100) return;
     h.gauge = 0;
     const sp = SPECIALS[HEROES[h.id].special];
-    msg(`${h.name}：「${sp.name}！」`);
+    msg(L(`${h.name}：「${sp.name}！」`, `${h.name}: "${sp.name}!"`));
     sfx('special'); B.flash = 6; B.flashCol = '#f8f0c0';
     await stepForward(h);
     await frames(16);
@@ -364,13 +365,13 @@ async function heroAct(h, c) {
   }
   if (c.type === 'item') {
     const it = ITEMS[c.id];
-    if (!count(c.id)) { await msgWait(`${it.name}已經用完了。`); return; }
+    if (!count(c.id)) { await msgWait(L(`${it.name}已經用完了。`, `No ${it.name} left.`)); return; }
     addItem(c.id, -1);
     let t = c.target;
-    msg(`${h.name}使用了${it.name}。`);
+    msg(L(`${h.name}使用了${it.name}。`, `${h.name} uses ${it.name}.`));
     await frames(12);
-    if (it.use === 'revive') { if (t.hp > 0) { await msgWait('沒有效果。'); return; } fxHeal(t); sfx('heal'); t.hp = Math.max(1, Math.round(stats(t).maxhp * it.power)); await frames(20); return; }
-    if (t.hp <= 0) { await msgWait('沒有效果。'); return; }
+    if (it.use === 'revive') { if (t.hp > 0) { await msgWait(L('沒有效果。', 'No effect.')); return; } fxHeal(t); sfx('heal'); t.hp = Math.max(1, Math.round(stats(t).maxhp * it.power)); await frames(20); return; }
+    if (t.hp <= 0) { await msgWait(L('沒有效果。', 'No effect.')); return; }
     fxHeal(t); sfx('heal');
     if (it.use === 'heal') healHero(t, it.power);
     if (it.use === 'mp') { const s = stats(t); const b = t.mp; t.mp = Math.min(s.maxmp, t.mp + it.power); const p = heroPos(t); popup(p.x, p.y - 18, t.mp - b, '#78c8f8'); }
@@ -399,14 +400,14 @@ async function castSpell(h, sp, target, s) {
     sfx('heal'); fxHeal(target); await frames(20); delete target.status.poison; await frames(10);
   } else if (sp.type === 'revive') {
     sfx('heal'); fxHeal(target); await frames(24);
-    if (target.hp <= 0) { target.hp = Math.round(stats(target).maxhp * 0.5); } else await msgWait('沒有效果。');
+    if (target.hp <= 0) { target.hp = Math.round(stats(target).maxhp * 0.5); } else await msgWait(L('沒有效果。', 'No effect.'));
     await frames(10);
   } else if (sp.type === 'buff') {
     const ts = target === 'allHeroes' ? heroesAlive() : [target === 'allHeroes' ? h : target || h];
     sfx('buff');
     for (const t of ts) { fxBuff(t); t.buffs[sp.stat] = 4; }
     await frames(30);
-    msg(sp.stat === 'def' ? '防禦力提升了！' : '力量提升了！');
+    msg(sp.stat === 'def' ? L('防禦力提升了！', 'Defence rose!') : L('力量提升了！', 'Strength rose!'));
     await frames(20);
   } else if (sp.type === 'sleep') {
     sfx('sleep');
@@ -428,7 +429,7 @@ async function foeAct(f) {
   f.lunge = 10;
   if (act === 'atk' || act === 'twin') {
     const hits = act === 'twin' ? 2 : 1;
-    msg(act === 'twin' ? `${f.name}使出連擊！` : `${f.name}的攻擊！`);
+    msg(act === 'twin' ? L(`${f.name}使出連擊！`, `${f.name} strikes twice!`) : L(`${f.name}的攻擊！`, `${f.name} attacks!`));
     await frames(14);
     for (let k = 0; k < hits; k++) {
       const t = pick(); if (!t) break;
@@ -440,7 +441,7 @@ async function foeAct(f) {
     return;
   }
   const tech = TECHS[act];
-  msg(`${f.name}使出了「${tech.name}」！`);
+  msg(L(`${f.name}使出了「${tech.name}」！`, `${f.name} uses ${tech.name}!`));
   await frames(16);
   if (tech.kind === 'magic') {
     const ts = tech.target === 'all' ? heroesAlive() : [pick()];
@@ -457,7 +458,7 @@ async function foeAct(f) {
     await frames(30);
     for (const t of ts) {
       const p = heroPos(t);
-      if (Math.random() < (tech.status === 'sleep' ? 0.55 : 0.75)) { t.status[tech.status] = tech.status === 'sleep' ? 2 : 1; popup(p.x, p.y - 18, tech.status === 'sleep' ? 'ZZZ' : '中毒', tech.status === 'sleep' ? '#c0c0ff' : '#c080f8'); }
+      if (Math.random() < (tech.status === 'sleep' ? 0.55 : 0.75)) { t.status[tech.status] = tech.status === 'sleep' ? 2 : 1; popup(p.x, p.y - 18, tech.status === 'sleep' ? 'ZZZ' : L('中毒', 'POISON'), tech.status === 'sleep' ? '#c0c0ff' : '#c080f8'); }
       else popup(p.x, p.y - 18, 'MISS', '#a0a8c0');
     }
     await frames(20);
@@ -475,7 +476,7 @@ async function foeAct(f) {
     sfx('buff'); f.buffs[tech.stat] = 3;
     for (let k = 0; k < 12; k++) B.parts.push({ x: f.x + (Math.random() - 0.5) * f.art.width * 0.6, y: f.base - Math.random() * f.art.height, vx: 0, vy: -1, life: 30, col: '#f8e070', size: 2 });
     await frames(30);
-    msg(`${f.name}的防禦力提升了！`);
+    msg(L(`${f.name}的防禦力提升了！`, `${f.name}'s defence rose!`));
     await frames(20);
   }
 }
@@ -585,7 +586,7 @@ export function drawBattle() {
     windowBox(b.x, b.y + oy, b.w, b.h);
     const dead = h.hp <= 0, low = h.hp < s.maxhp / 4;
     text(h.name, b.x + 6, b.y + 4 + oy, B.active === h ? '#f8e070' : dead ? '#f86060' : '#f8f8f8');
-    if (h.status.poison) text('毒', b.x + b.w - 16, b.y + 4 + oy, '#c080f8');
+    if (h.status.poison) text(L('毒', 'P'), b.x + b.w - 16, b.y + 4 + oy, '#c080f8');
     text('HP', b.x + 6, b.y + 18 + oy, '#a0c0f8');
     text(String(h.hp), b.x + b.w - 6, b.y + 18 + oy, dead ? '#f86060' : low ? '#f8e070' : '#f8f8f8', { align: 'right' });
     text('MP', b.x + 6, b.y + 31 + oy, '#a0c0f8');
@@ -597,7 +598,12 @@ export function drawBattle() {
     const k = p.t, dy = k < 10 ? -k * 1.5 : k < 16 ? -15 + (k - 10) * 1.2 : -8;
     text(p.s, p.x, p.y + dy, p.col, { align: 'center', shadow: '#000010' });
   }
-  if (B.msg) { windowBox(4, 4, W - 8, 24); text(B.msg, 14, 10); if (B.msgWait && B.waitKey && (B.t >> 4) % 2) ctx.drawImage(HAND_D, W - 20, 16); }
+  if (B.msg) {
+    // a long line takes two rows instead of running off the window
+    const rows = textW(B.msg) > W - 34 ? wrap(B.msg, W - 34) : [B.msg], h = 8 + rows.length * 16;
+    windowBox(4, 4, W - 8, h); rows.forEach((r, i) => text(r, 14, 10 + i * 16));
+    if (B.msgWait && B.waitKey && (B.t >> 4) % 2) ctx.drawImage(HAND_D, W - 20, h - 8);
+  }
   for (const w of widgetStack) w.draw();
   if (B.flash) { ctx.globalAlpha = B.flash / 16; ctx.fillStyle = B.flashCol; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
   if (B.fade > 0) { ctx.globalAlpha = B.fade / 30; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }

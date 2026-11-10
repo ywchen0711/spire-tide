@@ -3,6 +3,7 @@
 import { ctx, W, H, text, textW, windowBox, HAND, HAND_D } from './gfx.js';
 import { input } from './input.js';
 import { sfx } from './audio.js';
+import { speaker } from './i18n.js';
 
 const stack = [];
 export const UI = {
@@ -21,11 +22,12 @@ export function wrap(s, w) {
   const out = [];
   for (const para of String(s).split('\n')) {
     let line = '';
-    for (const ch of para) {
+    // latin words stay whole; CJK breaks between any two characters
+    for (const ch of para.match(/[A-Za-z0-9'".,!?:;()\-]+ ?|./gu) || []) {
       if (textW(line + ch) > w && line) {
         // keep closing punctuation on the line it closes
         if ('，。、！？」』）…：；'.includes(ch)) { out.push(line + ch); line = ''; continue; }
-        out.push(line); line = ch;
+        out.push(line.trimEnd()); line = ch.trimStart();
       } else line += ch;
     }
     out.push(line);
@@ -35,6 +37,7 @@ export function wrap(s, w) {
 
 // ---------- dialogue ----------
 export function say(name, msg, { top = false, wait = true, keep = false } = {}) {
+  name = speaker(name);
   const lines = wrap(msg, 226);
   const pages = [];
   for (let i = 0; i < lines.length; i += 3) pages.push(lines.slice(i, i + 3));
@@ -123,6 +126,7 @@ export function menu(items, { x = 150, y = 60, w, cols = 1, cancel = true, title
 }
 export function choice(options, opts = {}) { return menu(options, { x: W - 90, y: H - 66 - options.length * 16 - 16, cancel: false, ...opts }); }
 export async function ask(name, msg, options, opts) {
+  name = speaker(name);
   // the question stays on screen while the choice is open
   const lines = wrap(msg, 226).slice(0, 3);
   const box = { update() {}, draw() { windowBox(4, H - 66, W - 8, 60); if (name) { windowBox(8, H - 81, textW(name) + 14, 18); text(name, 15, H - 78, '#f8e070'); } lines.forEach((l, i) => text(l, 14, H - 57 + i * 16)); } };

@@ -32,7 +32,7 @@
   <div class="dpad"><div class="u" data-k="up"></div><div class="l" data-k="left"></div><div class="c"></div><div class="r" data-k="right"></div><div class="d" data-k="down"></div></div>
   <div class="btn b" data-k="b">B</div>
   <div class="btn a" data-k="a">A</div>
-  <div class="btn m" data-k="menu">選單</div>
+  <div class="btn m" data-k="menu" id="menuBtn">選單</div>
 </div>
 <script>
   // scale the 256x224 picture by whole steps when there is room, fill otherwise
@@ -49,6 +49,6 @@
   new MutationObserver(fit).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   fit();
 </script>
-<script type="module" src="js/main.js?v=1"></script>
+<script type="module" src="js/main.js?v=2"></script>
 </body>
 </html>

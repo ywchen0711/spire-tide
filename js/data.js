@@ -1,4 +1,5 @@
 // Party, items, equipment, spells and enemies. Enemy stats are fixed and never scale with the party.
+import { localize } from './i18n.js';
 
 export const HEROES = {
   ren:  { name: '蓮', title: '劍士', sprite: 'ren',  base: { hp: 44, mp: 6,  str: 12, def: 9,  int: 5,  agi: 9 },  grow: { hp: 11, mp: 1.6, str: 2.6, def: 1.9, int: 1.0, agi: 1.4 }, equip: { weapon: 'shortsword', armor: 'cloth', acc: null }, kinds: ['sword', 'light', 'heavy'], special: 'azure' },
@@ -122,3 +123,33 @@ export const SHOPS = {
   arms: ['ironsword', 'steelsword', 'magerod', 'battleaxe', 'elfbow', 'leather', 'robe', 'chain', 'holyrobe'],
   armsEarly: ['ironsword', 'magerod', 'leather', 'robe'],
 };
+
+// ---------- English ----------
+localize(HEROES, { ren: ['Ren', 'Swordsman'], mira: ['Mira', 'Mage'], garo: ['Garo', 'Axeman'], lys: ['Lys', 'Priestess'] }, ['name', 'title']);
+localize(ITEMS, {
+  herb: ['Herb', 'Restores 45 HP'], hiherb: ['Hi-Herb', 'Restores 160 HP'], water: ['Magic Water', 'Restores 20 MP'],
+  antidote: ['Antidote', 'Cures poison'], plume: ['Phoenix Plume', 'Revives a fallen ally'], smoke: ['Smoke Ball', 'Always escape a battle'],
+  elixir: ['Elixir', 'Fully restores HP and MP'],
+  shortsword: ['Short Sword'], ironsword: ['Iron Sword'], steelsword: ['Steel Sword'], tideblade: ['Tide Blade'],
+  oakrod: ['Oak Rod'], magerod: ['Mage Rod'], starrod: ['Star Rod'], handaxe: ['Hand Axe'], battleaxe: ['Battle Axe'], titanaxe: ['Titan Axe'],
+  shortbow: ['Short Bow'], elfbow: ['Elf Bow'], cloth: ['Clothes'], leather: ['Leather'], robe: ['Robe'], chain: ['Chain Mail'],
+  holyrobe: ['Holy Robe'], mithril: ['Mithril'], powerring: ['Power Ring'], wardcharm: ['Ward Charm'], galeboots: ['Gale Boots'],
+  sageear: ['Sage Earring'], tidekey: ['Tide Key', 'An ancient key from the depths of the Northern Cape Grotto.'],
+});
+localize(SPELLS, {
+  flame: ['Flame'], ice: ['Ice Blade'], thunder: ['Thunder'], firestorm: ['Firestorm'], sleep: ['Sleep'], holy: ['Holy Arrow'],
+  heal: ['Heal'], healall: ['Heal All'], cure: ['Cure'], revive: ['Revive'], shield: ['Shield'], guard: ['Iron Wall'], roar: ['Roar'],
+});
+localize(SPECIALS, {
+  azure: ['Azure Slash', 'Huge damage to one enemy'], starburst: ['Starburst', 'Starlight strikes all enemies'],
+  quake: ['Earthsplitter', 'Splits the ground under all enemies'], sanctuary: ['Holy Prayer', 'Heals everyone and cures ailments'],
+});
+localize(ENEMIES, {
+  jelly: ['Green Jelly'], peckbird: ['Peckbird'], hornhare: ['Horn Hare'], shroom: ['Toadstool'], redjelly: ['Red Jelly'],
+  bat: ['Cave Bat'], rockcrab: ['Rock Crab'], bones: ['Skeleton'], clawmaw: ['Crab King'], merrow: ['Merrow'], wisp: ['Wisp'],
+  gargoyle: ['Gargoyle'], serpent: ['Sea Serpent'], seren: ['Seren of the Mist'], ordath: ['Ordath, Abyss King'],
+});
+localize(TECHS, {
+  spore: ['Poison Spore'], ember: ['Fireball'], drain: ['Drain'], twin: ['Double Hit'], bubble: ['Bubble Breath'], harden: ['Harden'],
+  wave: ['Breaker'], icefang: ['Ice Fang'], tide: ['Riptide'], mist: ['Mist'], abyss: ['Abyssal Tide'],
+});

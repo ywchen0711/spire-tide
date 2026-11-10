@@ -12,6 +12,10 @@ One morning the tower rises again, and ships near it vanish into the mist. Ren i
 
 The world, characters, story, art and music are all original.
 
+## Languages
+
+The game is fully playable in Traditional Chinese and in English, including the story, menus, battles and credits. The first time you play, it picks the language your browser uses. You can switch at any time: choose **Language** on the title screen, or open the menu and go to **Config → Language**. The choice is remembered.
+
 ## How it plays
 
 - **Explore.**
@@ -41,7 +45,7 @@ The world, characters, story, art and music are all original.
 | Move | arrow keys / WASD | d-pad / stick | on-screen d-pad |
 | Confirm, talk, check | Z / Enter / Space | A | A |
 | Cancel, open the menu | X / Esc | B | B |
-| Menu | C / Tab | Y / Start | 選單 |
+| Menu | C / Tab | Y / Start | MENU (選單) |
 
 ## How it looks and sounds
 
@@ -49,7 +53,7 @@ The world, characters, story, art and music are all original.
 - Monsters, trees and props are painted from shaded shapes on limited colour ramps, then dithered and outlined.
 - Terrain tiles join up with their neighbours, and water is animated.
 - The title screen flies over the island with a Mode 7-style rotating ground plane. Battles open with a mosaic transition.
-- The music is played by a small synthesizer built in code: pulse, triangle, strings, noise drums and an echo. There are eleven original pieces.
+- The music is played by a small synthesizer built in code: pulse, triangle, strings, noise drums and an echo. There are twelve original pieces.
 - The Chinese text uses the Cubic 11 (俐方體11號) pixel font. It is free to use, and its license is in `fonts/`.
 
 ## Files
@@ -64,6 +68,7 @@ The world, characters, story, art and music are all original.
 - `js/party.js` covers stats, levels, the inventory and saving.
 - `js/menu.js` covers the field menu, equipment, status, shops and settings.
 - `js/ui.js` has the dialogue boxes and list menus.
+- `js/i18n.js` switches the language. Text is written as `L('中文', 'English')`, and the data tables get English names.
 - `js/gfx.js` has the pixel helpers, sprite painter, font and windows.
 - `js/sprites.js` holds the character sprites.
 - `js/enemies.js` holds the monster art.

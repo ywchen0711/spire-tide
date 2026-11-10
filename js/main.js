@@ -13,8 +13,16 @@ import { startBattle, updateBattle, drawBattle, _B } from './battle.js';
 import { fieldMenu, shop, loadSettings } from './menu.js';
 import { SCRIPTS } from './story.js';
 import { sprite } from './sprites.js';
+import { L, LANG, isEn, setLang, onLang } from './i18n.js';
 
 setMaps(MAPS);
+// the page itself follows the language too
+function pageLang() {
+  document.documentElement.lang = isEn() ? 'en' : 'zh-Hant';
+  const mb = document.getElementById('menuBtn'); if (mb) mb.textContent = L('選單', 'MENU');
+}
+pageLang();
+onLang(pageLang);
 setSpellNamer((s) => SPELLS[s].name);
 loadSettings();
 
@@ -205,16 +213,18 @@ function updateTitle() {
   if (!title.ready) { if (input.anyPressed()) { title.ready = true; sfx('ok'); } return; }
   if (UI.active || T.job) return;
   const opts = titleOpts();
-  if (input.repeat('down') || input.repeat('up')) { title.sel = (title.sel + 1) % opts.length; sfx('cursor'); }
+  if (input.repeat('down')) { title.sel = (title.sel + 1) % opts.length; sfx('cursor'); }
+  if (input.repeat('up')) { title.sel = (title.sel + opts.length - 1) % opts.length; sfx('cursor'); }
   if (input.pressed('a')) {
     if (opts[title.sel].disabled) { sfx('buzz'); return; }
     sfx('ok');
     if (opts[title.sel].id === 'new') newGame();
+    else if (opts[title.sel].id === 'lang') setLang(LANG === 'en' ? 'zh' : 'en');
     else continueGame();
   }
   if (input.pressed('b')) title.ready = false;
 }
-const titleOpts = () => [{ id: 'new', label: '新的冒險' }, { id: 'cont', label: '繼續冒險', disabled: !hasSave(0) }];
+const titleOpts = () => [{ id: 'new', label: L('新的冒險', 'New Game') }, { id: 'cont', label: L('繼續冒險', 'Continue'), disabled: !hasSave(0) }, { id: 'lang', label: LANG === 'en' ? 'Language: English' : '語言：中文' }];
 function drawTitle() {
   const t = title.t, horizon = 84;
   // sky
@@ -228,22 +238,28 @@ function drawTitle() {
   const ang = -Math.PI / 2 + Math.sin(t / 900) * 0.35, cx = 384 + Math.cos(t / 700) * 90, cy = 1100 - (t * 0.3) % 1000;
   ctx.drawImage(mode7(cx, cy, ang, horizon, t), 0, 0);
   // logo
-  bigText('蒼潮魔塔傳', W / 2, 22, [255, 248, 200], [240, 160, 48], 3);
-  text('SPIRE OF THE BLUE TIDE', W / 2, 78, '#e0f0ff', { align: 'center', shadow: '#101030' });
+  if (isEn()) {
+    bigText('SPIRE OF THE', W / 2, 12, [255, 248, 200], [240, 160, 48], 2);
+    bigText('BLUE TIDE', W / 2, 40, [255, 248, 200], [240, 160, 48], 3);
+    text('蒼潮魔塔傳', W / 2, 96, '#e0f0ff', { align: 'center', shadow: '#101030' });
+  } else {
+    bigText('蒼潮魔塔傳', W / 2, 22, [255, 248, 200], [240, 160, 48], 3);
+    text('SPIRE OF THE BLUE TIDE', W / 2, 78, '#e0f0ff', { align: 'center', shadow: '#101030' });
+  }
   if (!title.ready) {
     if ((t >> 5) % 2) text('PRESS START', W / 2, 170, '#ffffff', { align: 'center' });
-    text('Z 決定　X 取消／選單　方向鍵 移動', W / 2, 190, '#e8f0ff', { align: 'center', shadow: '#101030' });
+    text(L('Z 決定　X 取消／選單　方向鍵 移動', 'Z: OK   X: Cancel/Menu   Arrows: Move'), W / 2, 190, '#e8f0ff', { align: 'center', shadow: '#101030' });
   } else {
     const opts = titleOpts();
-    windowBox(80, 146, 96, 48);
-    opts.forEach((o, i) => text(o.label, 104, 154 + i * 18, o.disabled ? '#8088a8' : '#f8f8f8'));
-    ctx.drawImage(HAND, 88 + ((t >> 3) % 2), 155 + title.sel * 18);
+    windowBox(66, 136, 124, 64);
+    opts.forEach((o, i) => text(o.label, 90, 144 + i * 18, o.disabled ? '#8088a8' : '#f8f8f8'));
+    ctx.drawImage(HAND, 74 + ((t >> 3) % 2), 145 + title.sel * 18);
   }
-  text('© 2026 原創作品', W / 2, H - 16, '#e8f0ff', { align: 'center', shadow: '#101030' });
+  text(L('© 2026 原創作品', '© 2026 An original game'), W / 2, H - 16, '#e8f0ff', { align: 'center', shadow: '#101030' });
 }
 
 // ---------- prologue ----------
-const PROLOGUE = [
+const PROLOGUE_ZH = [
   '百年前，深淵之王歐爾德',
   '從東方的海底升起一座灰色的高塔，',
   '率領魔物侵襲大地。',
@@ -257,6 +273,21 @@ const PROLOGUE = [
   '直到某天清晨，',
   '那座灰塔，再次從海面上浮現。',
 ];
+const PROLOGUE_EN = [
+  'A hundred years ago, the Abyss King',
+  'Ordath raised a grey tower from the',
+  'eastern sea and led monsters to war.',
+  '',
+  'Four heroes, with the Tide Key,',
+  'sealed tower and king beneath the sea.',
+  '',
+  'A hundred years went by.',
+  'The heroes were long forgotten...',
+  '',
+  'until one morning, the grey tower',
+  'rose out of the sea once more.',
+];
+const prologue = () => (isEn() ? PROLOGUE_EN : PROLOGUE_ZH);
 const intro = { t: 0 };
 async function newGame() {
   await trans('out', 30);
@@ -267,7 +298,7 @@ async function newGame() {
 }
 function updateIntro() {
   intro.t++;
-  const done = intro.t > PROLOGUE.length * 50 + 200;
+  const done = intro.t > prologue().length * 50 + 200;
   if ((input.pressed('a') || input.pressed('b') || done) && !T.job && !intro.leaving) {
     intro.leaving = true;
     (async () => {
@@ -284,7 +315,7 @@ function updateIntro() {
 function drawIntro() {
   ctx.fillStyle = '#000010'; ctx.fillRect(0, 0, W, H);
   for (let i = 0; i < 60; i++) { const x = (i * 97) % W, y = (i * 61) % H; if ((intro.t + i * 7) % 90 < 70) { ctx.fillStyle = i % 5 ? '#6070a0' : '#ffffff'; ctx.fillRect(x, y, 1, 1); } }
-  PROLOGUE.forEach((l, i) => {
+  prologue().forEach((l, i) => {
     const a = Math.max(0, Math.min(1, (intro.t - i * 50) / 40));
     if (a <= 0) return;
     ctx.globalAlpha = a;
@@ -318,8 +349,8 @@ function drawOver() {
   const a = Math.min(1, over.t / 60);
   ctx.globalAlpha = a;
   bigText('GAME OVER', W / 2, 80, [248, 96, 96], [160, 24, 40], 2);
-  text('冒險在這裡結束了……', W / 2, 130, '#c0c0d0', { align: 'center' });
-  if (over.t > 90 && (over.t >> 5) % 2) text('按 Z 回到標題畫面', W / 2, 170, '#f8f8f8', { align: 'center' });
+  text(L('冒險在這裡結束了……', 'Your adventure ends here...'), W / 2, 130, '#c0c0d0', { align: 'center' });
+  if (over.t > 90 && (over.t >> 5) % 2) text(L('按 Z 回到標題畫面', 'Press Z to return to the title'), W / 2, 170, '#f8f8f8', { align: 'center' });
   ctx.globalAlpha = 1;
 }
 
@@ -327,12 +358,12 @@ function drawOver() {
 async function ending() {
   stopMusic(1);
   E.shake(40); sfx('boom');
-  await say('歐爾德', '這……股力量……難道是……百年前的……那些傢伙的……');
+  await say('歐爾德', L('這……股力量……難道是……百年前的……那些傢伙的……', 'This... power... It cannot be... the same as... those heroes... a hundred years ago...'));
   for (let i = 0; i < 4; i++) { E.flash('#ffffff', 10); sfx('boom'); E.shake(20); await wait(24); }
   E.removeEnt('ordath');
   await wait(30);
   E.shake(90); sfx('quake');
-  await say('莉絲', '塔要崩塌了！大家快離開這裡！');
+  await say('莉絲', L('塔要崩塌了！大家快離開這裡！', 'The tower is collapsing! Everyone, get out of here!'));
   await trans('out', 60, '#ffffff');
   T.col = '#ffffff';
   loadMap('town', 19, 24, 'u');
@@ -344,14 +375,14 @@ async function ending() {
   await trans('in', 60, '#ffffff');
   T.col = '#000';
   await wait(30);
-  await say('老漁夫', '看哪！海上的霧散了……是船！失蹤的船全都回來了！');
-  await say('水手', '大家都平安無事！他們說，在霧裡做了好長好長的夢……');
-  await say('村長', '蓮……還有各位。潮鳴港欠你們一份永遠也還不清的恩情。');
-  await say('母親', '歡迎回來，蓮。');
-  await say('蓮', '……我回來了。');
-  if (S.members.find((m) => m.id === 'mira')) await say('米菈', '欸嘿嘿，我們成了新的英雄耶！這次可別讓大家忘記我們的名字喔！');
-  if (S.members.find((m) => m.id === 'garo')) await say('葛羅', '哈哈！今晚整個港口都要喝個痛快！');
-  if (S.members.find((m) => m.id === 'lys')) await say('莉絲', '神殿的大家，也從塔裡被放出來了……謝謝你們。真的，謝謝。');
+  await say('老漁夫', L('看哪！海上的霧散了……是船！失蹤的船全都回來了！', 'Look! The fog over the sea is lifting... Ships! All the lost ships are coming home!'));
+  await say('水手', L('大家都平安無事！他們說，在霧裡做了好長好長的夢……', 'Everyone is safe! They say they had a long, long dream in the fog...'));
+  await say('村長', L('蓮……還有各位。潮鳴港欠你們一份永遠也還不清的恩情。', 'Ren... and all of you. Tidebell owes you a debt it can never repay.'));
+  await say('母親', L('歡迎回來，蓮。', 'Welcome home, Ren.'));
+  await say('蓮', L('……我回來了。', "...I'm home."));
+  if (S.members.find((m) => m.id === 'mira')) await say('米菈', L('欸嘿嘿，我們成了新的英雄耶！這次可別讓大家忘記我們的名字喔！', "Ehehe, we're the new heroes! And this time, nobody gets to forget our names!"));
+  if (S.members.find((m) => m.id === 'garo')) await say('葛羅', L('哈哈！今晚整個港口都要喝個痛快！', 'Hah! Tonight the whole harbour drinks till dawn!'));
+  if (S.members.find((m) => m.id === 'lys')) await say('莉絲', L('神殿的大家，也從塔裡被放出來了……謝謝你們。真的，謝謝。', 'The people of the temple were freed from the tower too... Thank you. Truly, thank you.'));
   await wait(40);
   await trans('out', 60);
   scene = 'credits'; credits.t = 0;
@@ -359,7 +390,7 @@ async function ending() {
   T.dark = 0;
   save(1);
 }
-const CREDITS = [
+const CREDITS_ZH = [
   ['蒼潮魔塔傳', 'big'], [''], ['SPIRE OF THE BLUE TIDE'], [''], [''],
   ['— 登場人物 —', 'y'], ['蓮　　潮鳴港的少年劍士'], ['米菈　見習魔導士'], ['葛羅　鐵匠'], ['莉絲　海神殿的巫女'], [''],
   ['村長　母親　老漁夫　水手'], ['守衛　旅店老闆　修女'], ['潮鳴港的人們'], [''], [''],
@@ -367,10 +398,19 @@ const CREDITS = [
   ['故事、畫面、音樂、程式'], ['全部以程式碼繪製與合成'], [''], ['字型：俐方體11號 (Cubic 11)'], [''], [''],
   ['感謝你的遊玩！', 'y'], [''], [''], ['—— 完 ——', 'big'],
 ];
+const CREDITS_EN = [
+  ['SPIRE OF THE', 'big'], ['BLUE TIDE', 'big'], [''], ['蒼潮魔塔傳'], [''], [''],
+  ['- CAST -', 'y'], ['Ren - young swordsman of Tidebell'], ['Mira - apprentice mage'], ['Garo - the town smith'], ['Lys - priestess of the sea temple'], [''],
+  ['The Mayor   Mother   Old Fisher'], ['Sailor   Guard   Innkeeper   Sister'], ['and the people of Tidebell'], [''], [''],
+  ['- MONSTERS -', 'y'], ['Green Jelly   Peckbird   Horn Hare'], ['Toadstool   Cave Bat   Rock Crab'], ['Skeleton   Merrow   Wisp'], ['Gargoyle   Sea Serpent'], ['The Crab King'], ['Seren of the Mist'], ['Ordath, King of the Abyss'], [''], [''],
+  ['Story, art and music'], ['all made in code'], [''], ['Font: Cubic 11'], [''], [''],
+  ['THANK YOU FOR PLAYING!', 'y'], [''], [''], ['THE END', 'big'],
+];
+const creditList = () => (isEn() ? CREDITS_EN : CREDITS_ZH);
 const credits = { t: 0 };
 function updateCredits() {
   credits.t++;
-  const end = CREDITS.length * 18 * 2 + H * 2;
+  const end = creditList().length * 18 * 2 + H * 2;
   if ((credits.t > end && input.pressed('a')) && !T.job) {
     (async () => { await trans('out', 40); scene = 'title'; title.ready = false; playMusic('title'); await trans('in', 40); })();
   }
@@ -378,9 +418,10 @@ function updateCredits() {
 function drawCredits() {
   ctx.fillStyle = '#000010'; ctx.fillRect(0, 0, W, H);
   const y0 = H - credits.t / 2;
-  CREDITS.forEach(([s, k], i) => {
+  const list = creditList();
+  list.forEach(([s, k], i) => {
     let y = y0 + i * 18;
-    if (k === 'big' && i === CREDITS.length - 1) y = Math.max(y, 90);
+    if (k === 'big' && i === list.length - 1) y = Math.max(y, 90);
     if (y < -20 || y > H) return;
     if (k === 'big') bigText(s, W / 2, y - 6, [255, 248, 200], [240, 160, 48], 2);
     else text(s, W / 2, y, k === 'y' ? '#f8e070' : '#e8e8f8', { align: 'center' });

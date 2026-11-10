@@ -1,6 +1,7 @@
 // Every map: the harbour town and its houses, the island world map, the grotto and the tower.
 // Rows of characters; the legend turns each character into a tile and, for some, an entity.
 import { hash } from './gfx.js';
+import { localize } from './i18n.js';
 
 // characters shared by all maps
 const BASE = {
@@ -447,3 +448,10 @@ MAPS.tower4 = {
     v: { k: 'down', e: warp('tower3', 11, 2, 'd') },
   }), { id: 'tower4', tint: 'rgba(40,0,40,0.18)' }),
 };
+
+// ---------- English place names ----------
+localize(MAPS, {
+  town: ['Tidebell'], renhouse: ["Ren's House"], mayor: ["Mayor's House"], inn: ["The Gull's Rest"], shop: ['Harbour Shop'],
+  chapel: ['Sea Chapel'], cave1: ['Northern Cape Grotto'], cave2: ['Grotto Depths'], tower1: ['Spire 1F'], tower2: ['Spire 2F'],
+  tower3: ['Spire 3F'], tower4: ['Spire Summit'],
+}, ['name']);

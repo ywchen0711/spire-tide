@@ -1,5 +1,6 @@
 // The party, inventory, gold, story flags, and saving.
 import { HEROES, LEARN, ITEMS, expFor } from './data.js';
+import { L, onLang } from './i18n.js';
 
 export const S = {
   members: [], inv: {}, gold: 0, flags: {}, map: 'town', x: 0, y: 0, dir: 'd', time: 0, steps: 0,
@@ -47,15 +48,19 @@ export function gainExp(h, n) {
     h.lv++;
     const after = stats(h);
     h.hp += after.maxhp - before.maxhp; h.mp += after.maxmp - before.maxmp;
-    out.push(`${h.name}升到了 ${h.lv} 級！`);
-    const gains = [['HP', 'maxhp'], ['力量', 'str'], ['防禦', 'def'], ['智力', 'int'], ['敏捷', 'agi']].map(([n2, k]) => (after[k] > before[k] ? `${n2}+${after[k] - before[k]}` : null)).filter(Boolean);
-    if (gains.length) out.push('　' + gains.join(' '));
-    for (const sp of spellsOf(h)) if (!had.includes(sp)) out.push(`${h.name}學會了「${spellName(sp)}」！`);
+    out.push(L(`${h.name}升到了 ${h.lv} 級！`, `${h.name} reached level ${h.lv}!`));
+    const gains = [['HP', 'maxhp'], [L('力量', 'STR'), 'str'], [L('防禦', 'DEF'), 'def'], [L('智力', 'INT'), 'int'], [L('敏捷', 'AGI'), 'agi']].map(([n2, k]) => (after[k] > before[k] ? `${n2}+${after[k] - before[k]}` : null)).filter(Boolean);
+    if (gains.length) out.push(L('　', '  ') + gains.join(' '));
+    for (const sp of spellsOf(h)) if (!had.includes(sp)) out.push(L(`${h.name}學會了「${spellName(sp)}」！`, `${h.name} learned ${spellName(sp)}!`));
   }
   return out;
 }
 let spellName = (s) => s;
 export function setSpellNamer(f) { spellName = f; }
+
+// names are stored in the save, so follow the current language
+export function refreshNames() { for (const m of S.members) m.name = HEROES[m.id].name; }
+onLang(refreshNames);
 
 export function addItem(id, n = 1) { S.inv[id] = (S.inv[id] || 0) + n; if (S.inv[id] <= 0) delete S.inv[id]; }
 export const count = (id) => S.inv[id] || 0;
@@ -75,6 +80,7 @@ export function load(slot = 0) {
     const d = JSON.parse(localStorage.getItem(KEY + slot));
     if (!d) return false;
     Object.assign(S, { members: [], inv: {}, flags: {} }, d);
+    refreshNames();
     return true;
   } catch (e) { return false; }
 }
