@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>蒼潮魔塔傳 Spire of the Blue Tide</title>
+<meta name="description" content="原創 16 位元風格角色扮演遊戲：港口小鎮、推石塊解謎的洞窟、浮出海面的魔塔與回合制戰鬥。">
+<link rel="preload" href="fonts/Cubic_11.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+  @font-face { font-family: Cubic11; src: url(fonts/Cubic_11.woff2) format('woff2'); font-display: block; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: Cubic11, sans-serif; color: #ccd; }
+  #wrap { position: relative; line-height: 0; }
+  #screen { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  /* CRT-ish scanlines over the picture */
+  #wrap::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) calc(var(--px) * 0.5), rgba(0,0,0,0.22) calc(var(--px) * 0.5), rgba(0,0,0,0.22) var(--px)); }
+  body.noscan #wrap::after { display: none; }
+  #touch { display: none; width: 100%; max-width: 560px; height: 180px; position: relative; flex: none; }
+  body.touching #touch { display: block; }
+  .dpad { position: absolute; left: 18px; bottom: 18px; width: 140px; height: 140px; }
+  .dpad div { position: absolute; width: 46px; height: 46px; background: #2a2f48; border: 2px solid #4a5070; border-radius: 6px; }
+  .dpad .u { left: 47px; top: 0; } .dpad .d { left: 47px; bottom: 0; } .dpad .l { left: 0; top: 47px; } .dpad .r { right: 0; top: 47px; } .dpad .c { left: 47px; top: 47px; border-radius: 0; background: #23273c; }
+  .btn { position: absolute; width: 64px; height: 64px; border-radius: 50%; background: #8a2838; border: 3px solid #c84858; color: #fff; font: 22px Cubic11, sans-serif; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .btn.a { right: 22px; bottom: 70px; }
+  .btn.b { right: 100px; bottom: 26px; background: #283878; border-color: #4868c8; }
+  .btn.m { right: 22px; bottom: 6px; width: 52px; height: 30px; border-radius: 15px; font-size: 14px; background: #3a3a48; border-color: #6a6a80; }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="screen" width="256" height="224"></canvas></div>
+<div id="touch">
+  <div class="dpad"><div class="u" data-k="up"></div><div class="l" data-k="left"></div><div class="c"></div><div class="r" data-k="right"></div><div class="d" data-k="down"></div></div>
+  <div class="btn b" data-k="b">B</div>
+  <div class="btn a" data-k="a">A</div>
+  <div class="btn m" data-k="menu">選單</div>
+</div>
+<script>
+  // scale the 256x224 picture by whole steps when there is room, fill otherwise
+  function fit() {
+    const touch = document.body.classList.contains('touching');
+    const aw = innerWidth, ah = innerHeight - (touch ? 180 : 0);
+    let s = Math.min(aw / 256, ah / 224);
+    if (s >= 2) s = Math.floor(s);
+    const c = document.getElementById('screen');
+    c.style.width = Math.floor(256 * s) + 'px'; c.style.height = Math.floor(224 * s) + 'px';
+    document.getElementById('wrap').style.setProperty('--px', s + 'px');
+  }
+  addEventListener('resize', fit);
+  new MutationObserver(fit).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  fit();
+</script>
+<script type="module" src="js/main.js?v=1"></script>
+</body>
+</html>
