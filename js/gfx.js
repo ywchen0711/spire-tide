@@ -10,10 +10,26 @@ export function canvas(w, h) {
   return c;
 }
 
+// Everything draws into this 256x224 picture. present() copies it onto the visible canvas, whose
+// size index.html sets to a whole number of real screen pixels per game pixel, so text stays sharp
+// at any display scaling. The scanlines are drawn here too, lined up with those pixels.
 export const screen = document.getElementById('screen');
-screen.width = W; screen.height = H;
-export const ctx = screen.getContext('2d');
-ctx.imageSmoothingEnabled = false;
+const game = canvas(W, H);
+export const ctx = game.x;
+const sctx = screen.getContext('2d');
+let lines = null;
+export function present(scan) {
+  const k = Math.max(1, Math.round(screen.width / W));
+  sctx.imageSmoothingEnabled = false;
+  sctx.drawImage(game, 0, 0, W * k, H * k);
+  if (!scan || k < 2) return;
+  if (!lines || lines.k !== k) {
+    lines = canvas(W * k, H * k); lines.k = k;
+    lines.x.fillStyle = k >= 3 ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.16)';
+    for (let y = 0; y < H; y++) lines.x.fillRect(0, y * k + k - 1, W * k, 1);
+  }
+  sctx.drawImage(lines, 0, 0);
+}
 
 // ---------- colour helpers ----------
 export function rgb(h) {
@@ -229,17 +245,37 @@ export class Painter {
 const glyphCache = new Map();
 export const FONT = '12px Cubic11';
 export function textW(s) { ctx.font = FONT; return Math.round(ctx.measureText(s).width); }
-// crisp text: draw, then snap every pixel to fully on or off
-function glyphs(s, col) {
+// Crisp text. Cubic 11 sits on a 12-pixel grid (100 font units per pixel), but browsers smear
+// thin strokes across neighbouring pixels in their own ways, so thresholding the 12px text breaks
+// some characters. Instead each string is drawn 8 times larger, where every font pixel is an 8x8
+// block, and the centre of each block decides whether that pixel is on.
+const GS = 8, maskCache = new Map(), big = canvas(1, 1);
+function glyphMask(s) {
+  let m = maskCache.get(s);
+  if (m) return m;
+  const w = Math.max(1, textW(s) + 2), h = 14;
+  if (big.width < w * GS) big.width = w * GS;
+  if (big.height < h * GS) big.height = h * GS;
+  const x = big.x;
+  x.clearRect(0, 0, big.width, big.height);
+  x.font = 12 * GS + 'px Cubic11'; x.textBaseline = 'alphabetic'; x.fillStyle = '#fff';
+  x.fillText(s, 0, 11 * GS); // the font's ascent is 10 pixels; the old top-aligned text started 1 pixel down
+  const d = x.getImageData(0, 0, w * GS, h * GS).data, bits = new Uint8Array(w * h);
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) bits[yy * w + xx] = d[(((yy * GS + GS / 2) * w * GS) + xx * GS + GS / 2) * 4 + 3] > 127 ? 1 : 0;
+  m = { w, h, bits };
+  if (maskCache.size > 3000) maskCache.clear();
+  maskCache.set(s, m);
+  return m;
+}
+// the string as a canvas in one colour
+export function glyphs(s, col) {
   const key = s + '|' + col;
   let c = glyphCache.get(key);
   if (c) return c;
-  const w = Math.max(1, textW(s) + 2);
-  c = canvas(w, 14);
-  c.x.font = FONT; c.x.textBaseline = 'top'; c.x.fillStyle = col;
-  c.x.fillText(s, 0, 1);
-  const id = c.x.getImageData(0, 0, w, 14), d = id.data, [r, g, b] = rgb(col);
-  for (let i = 0; i < d.length; i += 4) { if (d[i + 3] > 110) { d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255; } else d[i + 3] = 0; }
+  const m = glyphMask(s), [r, g, b] = rgb(col);
+  c = canvas(m.w, m.h);
+  const id = c.x.createImageData(m.w, m.h), d = id.data;
+  for (let k = 0; k < m.bits.length; k++) if (m.bits[k]) { d[k * 4] = r; d[k * 4 + 1] = g; d[k * 4 + 2] = b; d[k * 4 + 3] = 255; }
   c.x.putImageData(id, 0, 0);
   if (glyphCache.size > 3000) glyphCache.clear();
   glyphCache.set(key, c);

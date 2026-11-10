@@ -12,9 +12,6 @@
   body { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: Cubic11, sans-serif; color: #ccd; }
   #wrap { position: relative; line-height: 0; }
   #screen { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
-  /* CRT-ish scanlines over the picture */
-  #wrap::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) calc(var(--px) * 0.5), rgba(0,0,0,0.22) calc(var(--px) * 0.5), rgba(0,0,0,0.22) var(--px)); }
-  body.noscan #wrap::after { display: none; }
   #touch { display: none; width: 100%; max-width: 560px; height: 180px; position: relative; flex: none; }
   body.touching #touch { display: block; }
   .dpad { position: absolute; left: 18px; bottom: 18px; width: 140px; height: 140px; }
@@ -35,20 +32,21 @@
   <div class="btn m" data-k="menu" id="menuBtn">選單</div>
 </div>
 <script>
-  // scale the 256x224 picture by whole steps when there is room, fill otherwise
+  // Scale the 256x224 picture by a whole number of real screen pixels, so every game pixel is an
+  // even square even with Windows display scaling at 125% or 150%. The canvas itself is that big.
   function fit() {
     const touch = document.body.classList.contains('touching');
-    const aw = innerWidth, ah = innerHeight - (touch ? 180 : 0);
-    let s = Math.min(aw / 256, ah / 224);
-    if (s >= 2) s = Math.floor(s);
+    const dpr = window.devicePixelRatio || 1;
+    const aw = innerWidth * dpr, ah = (innerHeight - (touch ? 180 : 0)) * dpr;
+    const k = Math.max(1, Math.floor(Math.min(aw / 256, ah / 224)));
     const c = document.getElementById('screen');
-    c.style.width = Math.floor(256 * s) + 'px'; c.style.height = Math.floor(224 * s) + 'px';
-    document.getElementById('wrap').style.setProperty('--px', s + 'px');
+    if (c.width !== 256 * k) { c.width = 256 * k; c.height = 224 * k; }
+    c.style.width = (256 * k) / dpr + 'px'; c.style.height = (224 * k) / dpr + 'px';
   }
   addEventListener('resize', fit);
   new MutationObserver(fit).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   fit();
 </script>
-<script type="module" src="js/main.js?v=2"></script>
+<script type="module" src="js/main.js?v=3"></script>
 </body>
 </html>

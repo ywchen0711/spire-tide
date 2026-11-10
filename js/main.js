@@ -1,6 +1,7 @@
 // Boot, the main loop, the title screen (a Mode 7 flight over the island), screen transitions,
 // and the glue between the field, battles, menus and story scripts.
 import { ctx, W, H, canvas, text, textW, windowBox, HAND, tint, fromGrid } from './gfx.js';
+import * as gfx from './gfx.js';
 import { input, pollInput, endInput, setupTouch } from './input.js';
 import { initAudio, playMusic, stopMusic, sfx, currentSong } from './audio.js';
 import { UI, uiTick, say, talk, ask, wait, menu, notice } from './ui.js';
@@ -194,8 +195,7 @@ function mode7(camX, camY, ang, horizon, frame) {
 }
 function bigText(s, x, y, top, bot, scale = 2) {
   const w = textW(s) + 4, c = canvas(w, 16);
-  c.x.font = '12px Cubic11'; c.x.textBaseline = 'top';
-  c.x.fillStyle = '#ffffff'; c.x.fillText(s, 1, 1);
+  c.x.drawImage(gfx.glyphs ? gfx.glyphs(s, '#ffffff') : canvas(1, 1), 1, 0);
   const id = c.x.getImageData(0, 0, w, 16), d = id.data;
   for (let yy = 0; yy < 16; yy++) for (let xx = 0; xx < w; xx++) {
     const i = (yy * w + xx) * 4;
@@ -468,7 +468,7 @@ function frame(now) {
   acc += Math.min(100, now - last); last = now;
   let n = 0;
   while (acc >= 1000 / 60 && n < 4) { step(); acc -= 1000 / 60; n++; }
-  if (n) draw();
+  if (n) { draw(); if (gfx.present) gfx.present(!document.body.classList.contains('noscan')); }
   requestAnimationFrame(frame);
 }
 
