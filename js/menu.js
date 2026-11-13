@@ -1,9 +1,10 @@
 // The field menu (items, magic, equipment, status, save, settings), shops and the inn.
-import { ctx, W, H, text, textW, windowBox, bar } from './gfx.js';
+import { ctx, W, H, text, textW, windowBox, bar, HAND_D } from './gfx.js';
 import { sprite } from './sprites.js';
 import { ITEMS, SPELLS, HEROES, expFor } from './data.js';
 import { S, stats, spellsOf, addItem, count, save } from './party.js';
-import { menu, panel, notice, ask, pressKey } from './ui.js';
+import { menu, panel, notice, ask, pressKey, widget, wrap } from './ui.js';
+import { input } from './input.js';
 import { sfx, vol, setVolumes, music, setMusic } from './audio.js';
 import { healAmount } from './rules.js';
 import { L, LANG, isEn, setLang } from './i18n.js';
@@ -11,6 +12,10 @@ import { L, LANG, isEn, setLang } from './i18n.js';
 export const settings = { scan: true };
 const fmtTime = (t) => { const s = Math.floor(t / 60), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60; return `${h}:${String(m).padStart(2, '0')}`; };
 
+// while a member is being chosen the party panel itself is the picker: { i, ok, title }
+let pick = null;
+// sub-screens that cover the whole top of the screen hide the party/gold panels behind them
+let base = true;
 function drawParty(x, y, w, sel = -1) {
   windowBox(x, y, w, 8 + S.members.length * 40);
   S.members.forEach((m, i) => {
@@ -22,19 +27,38 @@ function drawParty(x, y, w, sel = -1) {
     text(`HP ${m.hp}/${s.maxhp}`, x + 30, yy + 13, m.hp <= 0 ? '#f86060' : m.hp < s.maxhp / 4 ? '#f8e070' : '#f8f8f8');
     text(`MP ${m.mp}/${s.maxmp}`, x + 30, yy + 25, '#c0d0f8');
     if (m.status.poison) text(L('毒', 'PSN'), x + w - 8, yy + 13, '#c080f8', { align: 'right' });
+    if (pick && !pick.ok(m)) { ctx.fillStyle = 'rgba(8,8,40,0.55)'; ctx.fillRect(x + 4, yy - 2, w - 8, 38); }
   });
 }
+// choose a member right on the party panel, so no extra window covers their HP and status
 async function pickMember(title, filter = () => true) {
-  const close = panel(() => {});
-  const r = await menu(S.members.map((m) => ({ label: m.name, right: `${m.hp}/${stats(m).maxhp}`, disabled: !filter(m) })), { x: 96, y: 40, w: 150, title });
-  close();
+  const keep = base; base = true;
+  let t = 0;
+  pick = { i: Math.max(0, S.members.findIndex(filter)), ok: filter, title };
+  const r = await widget({
+    update() {
+      const n = S.members.length;
+      t++;
+      if (input.repeat('down')) { pick.i = (pick.i + 1) % n; sfx('cursor'); }
+      if (input.repeat('up')) { pick.i = (pick.i + n - 1) % n; sfx('cursor'); }
+      if (input.pressed('a')) { if (!filter(S.members[pick.i])) { sfx('buzz'); return; } sfx('ok'); this.done(pick.i); } else if (input.pressed('b')) { sfx('cancel'); this.done(-1); }
+    },
+    draw() {
+      // the title stays right of the party panel; a long one wraps onto a second line
+      const tl = wrap(title, 76);
+      windowBox(158, 4, 94, 12 + tl.length * 14); tl.forEach((l, k) => text(l, 167, 10 + k * 14, '#f8e070'));
+      ctx.drawImage(HAND_D, 15, 4 + pick.i * 40 + ((t >> 3) % 2));
+    },
+  });
+  pick = null; base = keep;
   return r < 0 ? null : S.members[r];
 }
 
 // ---------- field menu ----------
 export async function fieldMenu(ctxInfo) {
   const close = panel(() => {
-    drawParty(4, 4, 150, -1);
+    if (!base) return;
+    drawParty(4, 4, 150, pick ? pick.i : -1);
     windowBox(158, 160, 94, 44);
     text(`${S.gold} G`, 244, 168, '#f8e070', { align: 'right' });
     text(fmtTime(S.time), 244, 184, '#f8f8f8', { align: 'right' });
@@ -60,9 +84,10 @@ async function itemMenu() {
     const list = Object.keys(S.inv).sort((a, b) => (ITEMS[a].slot ? 1 : 0) - (ITEMS[b].slot ? 1 : 0));
     if (!list.length) { await notice(L('什麼都沒有。', 'Nothing here.')); return; }
     let desc = '';
-    const close = panel(() => { windowBox(4, 186, W - 8, 34); text(desc, 14, 196); });
+    base = false;
+    const close = panel(() => { windowBox(4, 182, W - 8, 38); wrap(desc, W - 28).slice(0, 2).forEach((l, i) => text(l, 14, (l === desc ? 194 : 187) + i * 15)); });
     const r = await menu(list.map((id) => ({ label: ITEMS[id].name, right: ITEMS[id].key ? '' : S.inv[id] })), { x: 4, y: 4, w: W - 8, cols: 2, maxRows: 10, onMove: (i) => { const it = ITEMS[list[i]]; desc = it.desc || (it.slot ? equipDesc(it) : ''); } });
-    close();
+    close(); base = true;
     if (r < 0) return;
     const id = list[r], it = ITEMS[id];
     if (!it.use || it.use === 'escape') { sfx('buzz'); continue; }
@@ -108,6 +133,10 @@ export const canEquip = (m, it) => it.slot && (it.kind === 'any' || HEROES[m.id]
 async function equipMenu() {
   const m = await pickMember(L('誰要換裝備？', 'Equip whom?'));
   if (!m) return;
+  base = false;
+  try { await equipScreen(m); } finally { base = true; }
+}
+async function equipScreen(m) {
   const SLOT = [['weapon', L('武器', 'Weapon')], ['armor', L('防具', 'Armour')], ['acc', L('飾品', 'Accessory')]];
   for (;;) {
     const st = stats(m);
@@ -129,7 +158,7 @@ async function equipMenu() {
       rows.forEach(([n, x, y, c], i) => { const X = 14 + (i % 2) * 120, Y = 158 + Math.floor(i / 2) * 18; text(`${n} ${x} → `, X, Y); text(String(y), X + textW(`${n} ${x} → `), Y, c); });
     });
     const labels = [{ label: L('（卸下）', '(Remove)') }, ...opts.map((id) => ({ label: ITEMS[id].name, right: S.inv[id] }))];
-    const k = await menu(labels, { x: 60, y: 30, w: 170, title: SLOT[r][1], maxRows: 6, onMove: (i) => { preview = i === 0 ? null : opts[i - 1]; if (i === 0) preview = undefined; } });
+    const k = await menu(labels, { x: 60, y: 22, w: 170, title: SLOT[r][1], maxRows: 6, onMove: (i) => { preview = i === 0 ? null : opts[i - 1]; if (i === 0) preview = undefined; } });
     close2();
     if (k < 0) continue;
     if (cur) addItem(cur, 1);
@@ -148,7 +177,7 @@ async function statusMenu() {
     ctx.drawImage(sprite(m.id).d[0], 14, 14);
     text(`${m.name}　${HEROES[m.id].title}`, 38, 12, '#f8e070');
     text(`Lv ${m.lv}`, 38, 28);
-    const ex = isEn() ? 150 : 110;
+    const ex = Math.max(isEn() ? 150 : 110, 38 + textW(`${m.name}　${HEROES[m.id].title}`) + 12);
     text(`${L('經驗', 'EXP')} ${m.exp}`, ex, 12); text(`${L('下一級', 'Next')} ${Math.max(0, expFor(m.lv + 1) - m.exp)}`, ex, 28);
     const rows = [[`HP ${m.hp}/${st.maxhp}`, `MP ${m.mp}/${st.maxmp}`], [`${L('力量', 'STR')} ${st.str}`, `${L('防禦', 'DEF')} ${st.def}`], [`${L('智力', 'INT')} ${st.int}`, `${L('敏捷', 'AGI')} ${st.agi}`], [`${L('攻擊力', 'Attack')} ${st.atk}`, `${L('防禦力', 'Defence')} ${st.dfn}`]];
     rows.forEach(([a, b], i) => { text(a, 14, 50 + i * 15); text(b, 130, 50 + i * 15); });
@@ -207,12 +236,16 @@ async function buy(stock) {
       onMove: (i) => {
         const it = ITEMS[stock[i]];
         if (!it.slot) { info = `${it.desc}\n${L('持有', 'Owned')} ${count(stock[i])}`; return; }
-        info = S.members.map((m) => {
+        const parts = S.members.map((m) => {
           if (!canEquip(m, it)) return `${m.name} ──`;
           const a = stats(m), keep = m.equip[it.slot]; m.equip[it.slot] = stock[i]; const b = stats(m); m.equip[it.slot] = keep;
           const d = it.slot === 'weapon' ? b.atk - a.atk : b.dfn - a.dfn;
           return `${m.name} ${d > 0 ? '▲' + d : d < 0 ? '▼' + -d : '＝'}`;
-        }).join('　').replace(/(.*?　.*?)　/, '$1\n') + `　${L('持有', 'Owned')} ${count(stock[i])}`;
+        }).concat(`${L('持有', 'Owned')} ${count(stock[i])}`);
+        // pack whole entries into lines that fit the window (at most three)
+        const lines = [''];
+        for (const t of parts) { const cur = lines[lines.length - 1], n = cur ? cur + '　' + t : t; if (cur && textW(n) > W - 24) lines.push(t); else lines[lines.length - 1] = n; }
+        info = lines.slice(0, 3).join('\n');
       },
     });
     close();

@@ -10,7 +10,7 @@ import { S, stats, spellsOf, gainExp, addItem, count } from './party.js';
 import { physical, magic, healAmount, foeAction } from './rules.js';
 import { input } from './input.js';
 import { sfx, playMusic } from './audio.js';
-import { UI, menu, uiTick, wrap } from './ui.js';
+import { UI, menu, uiTick, wrap, fit } from './ui.js';
 
 let B = null;
 export const isBattle = () => !!B;
@@ -211,7 +211,9 @@ async function commandMenu(h, canBack) {
       { label: full && !isEn() ? sp.name : L('技能', 'Skill'), disabled: !full, color: full ? '#f8e070' : undefined }, { label: L('道具', 'Item') },
       { label: L('防禦', 'Guard') }, { label: L('逃跑', 'Run'), disabled: !B.canFlee },
     ];
-    const r = await menu(items, { x: Math.min(W - 130, Math.max(2, box.x + box.w / 2 - 65)), y: 98, w: 130, cols: 2, cancel: canBack, start: B.lastCmd && B.lastCmd[h.id] || 0 });
+    // a long special-move name widens the window so it never runs into the next column
+    const cw = Math.max(130, 2 * (Math.max(...items.map((it) => textW(it.label))) + 18) + 20);
+    const r = await menu(items, { x: Math.min(W - cw, Math.max(2, box.x + box.w / 2 - cw / 2)), y: 98, w: cw, cols: 2, cancel: canBack, start: B.lastCmd && B.lastCmd[h.id] || 0 });
     if (r < 0) return 'back';
     (B.lastCmd = B.lastCmd || {})[h.id] = r;
     if (r === 0) { const t = await pickFoe(); if (t) return { type: 'attack', target: t }; }
@@ -257,7 +259,7 @@ function pickFoe() {
         if (input.pressed('a')) { sfx('ok'); done(list[i]); }
         if (input.pressed('b')) { sfx('cancel'); done(null); }
       },
-      draw() { const f = list[i]; if (!f) return; ctx.drawImage(HAND_D, Math.round(f.x - 5), Math.round(f.base - f.ah - 10 + ((B.t >> 3) % 2))); windowBox(4, 4, W - 8, 24); text(f.name, W / 2, 10, '#f8f8f8', { align: 'center' }); drawTags(statusTags(f), W - 12, 10, W / 2 - 20 - textW(f.name) / 2); },
+      draw() { const f = list[i]; if (!f) return; windowBox(4, 4, W - 8, 24); text(f.name, W / 2, 10, '#f8f8f8', { align: 'center' }); drawTags(statusTags(f), W - 12, 10, W / 2 - 20 - textW(f.name) / 2); ctx.drawImage(HAND_D, Math.round(f.x - 5), Math.round(Math.max(31, f.base - f.ah - 10) + ((B.t >> 3) % 2))); },
     };
     const done = (v) => { UI_pop(w); res(v); };
     UI_push(w);
@@ -557,6 +559,8 @@ function drawTags(tags, x, y, room) {
 }
 // a name with its tags beside it; in a window too narrow for both, the name and each tag take turns
 function nameTags(name, col, tags, x0, x1, y) {
+  // a name wider than its box keeps its last word ("Old Gears" -> "Gears"), else it is cut with "..."
+  if (textW(name) > x1 - x0) { const last = name.split(' ').pop(); name = last !== name && textW(last) <= x1 - x0 ? last : fit(name, x1 - x0); }
   const room = x1 - x0 - textW(name) - 3;
   if (!tags.length || Math.max(...tags.map((t) => textW(t[0]))) <= room) { text(name, x0, y, col); drawTags(tags, x1, y, room); return; }
   const k = Math.floor(B.t / 60);

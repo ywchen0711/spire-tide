@@ -15,6 +15,10 @@ export const UI = {
 let frame = 0;
 export function uiTick() { frame++; }
 
+// shorten a label with "…" so it never runs into the value beside it
+export function fit(s, w) { s = String(s); if (textW(s) <= w) return s; while (s.length > 1 && textW(s + '…') > w) s = s.slice(0, -1); return s + '…'; }
+// a custom input widget (cursor on a panel and so on) on the same stack
+export function widget(w) { return push(w); }
 function push(w) { stack.push(w); return new Promise((res) => { w.done = (v) => { const i = stack.indexOf(w); if (i >= 0) stack.splice(i, 1); res(v); }; }); }
 
 // wrap text to a pixel width; \n forces a break
@@ -111,11 +115,14 @@ export function menu(items, { x = 150, y = 60, w, cols = 1, cancel = true, title
       if (title) { text(title, x + 10, oy, '#f8e070'); oy += 16; }
       for (let k = this.scroll * cols; k < Math.min(items.length, (this.scroll + vis) * cols); k++) {
         const it = items[k], cx = x + 18 + (k % cols) * colW, cy = oy + (Math.floor(k / cols) - this.scroll) * rowH;
-        text(it.label, cx, cy, it.disabled ? '#8088a8' : it.color || '#f8f8f8');
-        if (it.right !== undefined) text(String(it.right), cx + colW - 6, cy, it.disabled ? '#8088a8' : '#f8f8f8', { align: 'right' });
+        // a value in a left column stops short of the next column's cursor
+        const rt = it.right === undefined || it.right === '' ? '' : String(it.right), re = cx + colW - (k % cols < cols - 1 ? 16 : 6);
+        text(fit(it.label, rt ? re - cx - textW(rt) - 6 : colW - 2), cx, cy, it.disabled ? '#8088a8' : it.color || '#f8f8f8');
+        if (rt) text(rt, re, cy, it.disabled ? '#8088a8' : '#f8f8f8', { align: 'right' });
       }
-      if (this.scroll > 0 && (frame >> 3) % 2) text('▲', x + w - 14, y + 2, '#f8e070');
-      if (this.scroll + vis < rows && (frame >> 3) % 2) text('▼', x + w - 14, y + h - 14, '#f8e070');
+      // the scroll arrows sit on the window border, clear of the numbers in the right column
+      if (this.scroll > 0 && (frame >> 3) % 2) text('▲', x + w - 14, y - 5, '#f8e070');
+      if (this.scroll + vis < rows && (frame >> 3) % 2) text('▼', x + w - 14, y + h - 8, '#f8e070');
       const r = Math.floor(this.i / cols) - this.scroll;
       ctx.drawImage(HAND, x + 4 + (this.i % cols) * colW + ((frame >> 3) % 2), oy + r * rowH + 1);
       if (drawExtra) drawExtra(this.i);
@@ -139,8 +146,9 @@ export async function ask(name, msg, options, opts) {
 export function panel(draw) { const p = { update() {}, draw }; stack.push(p); return () => { const i = stack.indexOf(p); if (i >= 0) stack.splice(i, 1); }; }
 // a short centred message
 export function notice(msg, frames = 0) {
-  const w = Math.min(240, textW(msg) + 24);
-  const n = { t: 0, update() { this.t++; if ((frames && this.t > frames) || (!frames && (input.pressed('a') || input.pressed('b')))) { this.done(); } }, draw() { windowBox((W - w) / 2, 90, w, 26); text(msg, W / 2, 97, '#f8f8f8', { align: 'center' }); } };
+  // long messages wrap instead of running past the window
+  const lines = wrap(msg, 216), w = Math.min(240, Math.max(...lines.map((l) => textW(l))) + 24);
+  const n = { t: 0, update() { this.t++; if ((frames && this.t > frames) || (!frames && (input.pressed('a') || input.pressed('b')))) { this.done(); } }, draw() { windowBox((W - w) / 2, 90, w, 10 + lines.length * 16); lines.forEach((l, i) => text(l, W / 2, 97 + i * 16, '#f8f8f8', { align: 'center' })); } };
   return push(n);
 }
 // wait for A or B
