@@ -159,6 +159,8 @@ async function statusMenu() {
     const sp = spellsOf(m).map((s) => SPELLS[s].name), cols = en ? 3 : 4, cw = en ? 78 : 58;
     for (let i = 0; i < sp.length; i++) text(sp[i], 14 + (i % cols) * cw, (en ? 156 : 150) + Math.floor(i / cols) * 15);
     text(L('氣', 'SP'), 14, 196, '#a0c0f8'); bar(34, 201, 100, m.gauge, 100, '#f0b030');
+    text(L('狀態', 'State'), 146, 196, '#a0c0f8');
+    if (m.status.poison) text(L('中毒', 'Poison'), W - 14, 196, '#c080f8', { align: 'right' }); else text(L('正常', 'Normal'), W - 14, 196, '#f8f8f8', { align: 'right' });
   });
   await pressKey();
   close();
